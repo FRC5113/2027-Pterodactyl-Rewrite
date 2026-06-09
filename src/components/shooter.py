@@ -1,5 +1,4 @@
 import phoenix6
-from magicbot import feedback, will_reset_to
 from phoenix6 import (
     BaseStatusSignal,
     configs,
@@ -7,9 +6,13 @@ from phoenix6 import (
     signals,
 )
 from phoenix6.hardware import TalonFX
+
+from magicbot import feedback, will_reset_to
+
 from wpilib import (
     Mechanism2d,
     SmartDashboard,
+    RobotController
 )
 from wpimath import units
 
@@ -119,6 +122,13 @@ class Shooter:
         :rtype: float
         """
         return self.leader_motor_torque_current.value
+    
+    def get_applied_voltage(self) -> units.volts:
+        """
+        :returns: The applied voltage to the shooter.
+        :rtype: volts
+        """
+        return self.left_motor.get() * RobotController.getBatteryVoltage()
 
     """
     CONTROL METHODS

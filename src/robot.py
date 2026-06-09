@@ -2,13 +2,18 @@ import math
 
 from phoenix6 import CANBus
 from phoenix6.hardware import TalonFX, TalonFXS
+
 from wpimath import units
 
 import oi
+
 from components.drive_control import DriveControl
 from components.shooter import Shooter
 from components.swerve_drive import SwerveDrive
+from components.game_piece_sim import GamePieceSim
+
 from generated.tuner_constants import TunerConstants
+
 from lemonlib import LemonInput, LemonRobot
 from lemonlib.smart import SmartPreference, SmartProfile
 from lemonlib.util import (
@@ -31,6 +36,8 @@ class MyRobot(LemonRobot):
     # TODO: Indexer component
 
     drivetrain: SwerveDrive
+
+    game_piece_sim: GamePieceSim
 
     # TODO: Intake component
 

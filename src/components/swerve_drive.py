@@ -5,7 +5,7 @@ from wpilib import DriverStation, SmartDashboard
 from wpimath import units
 from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.kinematics import (
-    SwerveModuleState,
+    SwerveModuleState, ChassisSpeeds
 )
 from wpiutil import Sendable, SendableBuilder
 
@@ -77,6 +77,20 @@ class SwerveDrive(Sendable):
         self,
     ) -> list[SwerveModuleState]:
         return self.state.module_states
+    
+    def get_pose(self) -> Pose2d:
+        """
+        :returns: The estimated drivetrain pose from the swerve state.
+        :rtype: Pose2d
+        """
+        return self.state.pose
+
+    def get_chassis(self) -> ChassisSpeeds:
+        """
+        :returns: The applied drivetrain chassis from the swerve state.
+        :rtype: ChassisSpeeds
+        """
+        return self.state.speeds
 
     """
     TELEMETRY
