@@ -6,6 +6,7 @@ from wpimath import units
 
 import oi
 from components.drive_control import DriveControl
+from components.shooter import Shooter
 from components.swerve_drive import SwerveDrive
 from generated.tuner_constants import TunerConstants
 from lemonlib import LemonInput, LemonRobot
@@ -25,7 +26,7 @@ class MyRobot(LemonRobot):
 
     drive_control: DriveControl
 
-    # TODO: Shooter component
+    shooter: Shooter
 
     # TODO: Indexer component
 
@@ -175,3 +176,9 @@ class MyRobot(LemonRobot):
             self.sammi_curve(self.oi.drive_strafe()) * self.top_speed,
             self.sammi_curve(self.oi.drive_rotation()) * self.top_omega,
         )
+
+        """
+        SHOOTER
+        """
+        if self.oi.hard_shoot():
+            self.shooter.set_velocity(47.5)
