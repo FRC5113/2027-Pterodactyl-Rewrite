@@ -58,7 +58,7 @@ class SmartPreference(object):
         elif self._type is bool:
             Preferences.initBoolean(self._key, self._value)
 
-    def __get__(self, obj, objtype=None):
+    def __get__(self, obj, objtype=None) -> object:
         if self._low_bandwidth:
             return self._value
         # Only re-read from NT periodically to avoid per-cycle overhead

@@ -1,28 +1,20 @@
-from lemonlib import LemonRobot
-from phoenix6.hardware import TalonFX, TalonFXS
-
-# import cProfile
-
-# Patch out the expensive traceback in Phoenix6 error reports (see _report_status_no_traceback).
 import math
 
-from magicbot import feedback
+from phoenix6 import CANBus
 from phoenix6.hardware import TalonFX, TalonFXS
-from wpilib import DataLogManager, DriverStation, Field2d
 from wpimath import units
-from wpimath.geometry import Rotation3d, Transform3d
-from components.swerve_drive import SwerveDrive
 
+import oi
+from components.drive_control import DriveControl
+from components.swerve_drive import SwerveDrive
 from generated.tuner_constants import TunerConstants
-from lemonlib import LemonCamera, LemonInput, LemonRobot
+from lemonlib import LemonInput, LemonRobot
 from lemonlib.smart import SmartPreference, SmartProfile
 from lemonlib.util import (
     AlertManager,
     AlertType,
-    LEDController,
     curve,
 )
-from phoenix6 import CANBus
 
 
 class MyRobot(LemonRobot):
@@ -31,17 +23,21 @@ class MyRobot(LemonRobot):
 
     # TODO: Shooter controller: uses shooter component to shoot and indexer
 
-    # TODO: Driver controller
+    drive_control: DriveControl
 
     # TODO: Shooter component
 
     # TODO: Indexer component
 
-    # TODO: Swerve component
+    drivetrain: SwerveDrive
 
     # TODO: Intake component
 
     # TODO: LED component
+
+    # greatest speed that chassis should move (not greatest possible speed)
+    top_speed = SmartPreference(4.7)
+    top_omega = SmartPreference(6.0)
 
     def createObjects(self):
         """
@@ -143,7 +139,10 @@ class MyRobot(LemonRobot):
 
         # driving curve
         self.sammi_curve = curve(
-            lambda x: 1.89 * x**3 + 0.61 * x, 0.0, deadband=0.1, max_mag=1.0
+            lambda x: 1.89 * x**3 + 0.61 * x,
+            0.0,
+            deadband=0.1,
+            max_mag=1.0,  # This just makes a cubic curve for drive the bot with joysticks with deadband
         )
 
         # alerts
@@ -152,3 +151,27 @@ class MyRobot(LemonRobot):
             AlertManager.instant_alert(
                 "Low Bandwidth Mode is active! Tuning is disabled.", AlertType.INFO
             )
+
+    """
+    MODE INITIALIZATION
+    """
+
+    def teleopInit(self) -> None:
+        self.primary = LemonInput(0)
+        self.secondary = LemonInput(1)
+        self.oi = oi.DoubleOI(self.primary, self.secondary)
+
+    """
+    PERIODIC
+    """
+
+    def teleopPeriodic(self) -> None:
+        """
+        SWERVE
+        """
+
+        self.drive_control.request_drive_field(
+            self.sammi_curve(self.oi.drive_forward()) * self.top_speed,
+            self.sammi_curve(self.oi.drive_strafe()) * self.top_speed,
+            self.sammi_curve(self.oi.drive_rotation()) * self.top_omega,
+        )

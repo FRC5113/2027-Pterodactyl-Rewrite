@@ -37,6 +37,7 @@ class SwerveDrive(Sendable):
     """
 
     def __init__(self) -> None:
+        self.state = None
         Sendable.__init__(self)
         SmartDashboard.putData("Swerve Drive", self)
 
@@ -74,9 +75,7 @@ class SwerveDrive(Sendable):
 
     def get_module_states(
         self,
-    ) -> tuple[
-        SwerveModuleState, SwerveModuleState, SwerveModuleState, SwerveModuleState
-    ]:
+    ) -> list[SwerveModuleState]:
         return self.state.module_states
 
     """
@@ -108,6 +107,8 @@ class SwerveDrive(Sendable):
 
     def initSendable(self, builder: SendableBuilder) -> None:
         builder.setSmartDashboardType("SwerveDrive")
+        if self.state is None:
+            return
         builder.addDoubleProperty(
             "Robot Angle",
             lambda: self.state.pose.rotation().degrees(),
@@ -127,19 +128,21 @@ class SwerveDrive(Sendable):
             builder.addDoubleProperty(f"{label} Velocity", _vel, lambda _: None)
             builder.addDoubleProperty(f"{label} Angle", _ang, lambda _: None)
 
-        swerve_setpoints = []
-        for state in self.state.module_targets:
-            swerve_setpoints += [state.angle.degrees(), state.speed]
-        builder.addDoubleArrayProperty(
-            "Swerve Setpoints", lambda: swerve_setpoints, lambda _: None
-        )
+        if self.state.module_targets is not None:
+            swerve_setpoints = []
+            for state in self.state.module_targets:
+                swerve_setpoints += [state.angle.degrees(), state.speed]
+            builder.addDoubleArrayProperty(
+                "Swerve Setpoints", lambda: swerve_setpoints, lambda _: None
+            )
 
-        swerve_measurements = []
-        for ms in self.state.module_states:
-            swerve_measurements += [ms.angle.degrees(), ms.speed]
-        builder.addDoubleArrayProperty(
-            "Swerve Measurements", lambda: swerve_measurements, lambda _: None
-        )
+        if self.state.module_states is not None:
+            swerve_measurements = []
+            for ms in self.state.module_states:
+                swerve_measurements += [ms.angle.degrees(), ms.speed]
+            builder.addDoubleArrayProperty(
+                "Swerve Measurements", lambda: swerve_measurements, lambda _: None
+            )
 
     """
     CONTROL METHODS
@@ -175,7 +178,7 @@ class SwerveDrive(Sendable):
         For example, if the robot is facing left, then pass in an angle of +90 degrees (counter-clockwise).
         """
 
-        self.drivetrain.seed_field_centric(angle)
+        self.drivetrain.set_operator_perspective_forward(angle)
 
     def set_blue_alliance_perspective(self):
         """
