@@ -1,0 +1,289 @@
+{
+ "name":"2026",
+ "version":2,
+ "type":"Swerve",
+ "variables":{
+  "expressions":{
+   "left_ball_front":{
+    "dimension":"Number",
+    "var":{
+     "exp":"0",
+     "val":0.0
+    }
+   }
+  },
+  "poses":{
+   "climber":{
+    "x":{
+     "exp":"1.5 m",
+     "val":1.5
+    },
+    "y":{
+     "exp":"3.745 m",
+     "val":3.745
+    },
+    "heading":{
+     "exp":"0 rad",
+     "val":0.0
+    }
+   },
+   "end_left_intake":{
+    "x":{
+     "exp":"7.8 m",
+     "val":7.8
+    },
+    "y":{
+     "exp":"4 m",
+     "val":4.0
+    },
+    "heading":{
+     "exp":"270 degrees",
+     "val":4.71238898038469
+    }
+   },
+   "end_right_intake":{
+    "x":{
+     "exp":"7.8 m",
+     "val":7.8
+    },
+    "y":{
+     "exp":"4 m",
+     "val":4.0
+    },
+    "heading":{
+     "exp":"90 degrees",
+     "val":1.5707963267948966
+    }
+   },
+   "hubfront":{
+    "x":{
+     "exp":"3.5 m",
+     "val":3.5
+    },
+    "y":{
+     "exp":"4.035 m",
+     "val":4.035
+    },
+    "heading":{
+     "exp":"0 degrees",
+     "val":0.0
+    }
+   },
+   "hubfront_faceaway":{
+    "x":{
+     "exp":"3.5 m",
+     "val":3.5
+    },
+    "y":{
+     "exp":"4.04 m",
+     "val":4.04
+    },
+    "heading":{
+     "exp":"3.1415 rad",
+     "val":3.1415
+    }
+   },
+   "left_ball_enter":{
+    "x":{
+     "exp":"7.021 m",
+     "val":7.021
+    },
+    "y":{
+     "exp":"5.663 m",
+     "val":5.663
+    },
+    "heading":{
+     "exp":"0 rad",
+     "val":0.0
+    }
+   },
+   "left_intake":{
+    "x":{
+     "exp":"7.8 m",
+     "val":7.8
+    },
+    "y":{
+     "exp":"7 m",
+     "val":7.0
+    },
+    "heading":{
+     "exp":"270 degrees",
+     "val":4.71238898038469
+    }
+   },
+   "left_trench":{
+    "x":{
+     "exp":"3.616 m",
+     "val":3.616
+    },
+    "y":{
+     "exp":"7.367 m",
+     "val":7.367
+    },
+    "heading":{
+     "exp":"0 rad",
+     "val":0.0
+    }
+   },
+   "outpost":{
+    "x":{
+     "exp":"0.43 m",
+     "val":0.43
+    },
+    "y":{
+     "exp":"0.66 m",
+     "val":0.66
+    },
+    "heading":{
+     "exp":"90 degrees",
+     "val":1.5707963267948966
+    }
+   },
+   "right_intake":{
+    "x":{
+     "exp":"7.8 m",
+     "val":7.8
+    },
+    "y":{
+     "exp":"1 m",
+     "val":1.0
+    },
+    "heading":{
+     "exp":"90 degrees",
+     "val":1.5707963267948966
+    }
+   },
+   "right_trench":{
+    "x":{
+     "exp":"3.616 m",
+     "val":3.616
+    },
+    "y":{
+     "exp":"0.72 m",
+     "val":0.72
+    },
+    "heading":{
+     "exp":"0 rad",
+     "val":0.0
+    }
+   },
+   "shoot":{
+    "x":{
+     "exp":"2 m",
+     "val":2.0
+    },
+    "y":{
+     "exp":"4 m",
+     "val":4.0
+    },
+    "heading":{
+     "exp":"0 rad",
+     "val":0.0
+    }
+   },
+   "shoot_left":{
+    "x":{
+     "exp":"3 m",
+     "val":3.0
+    },
+    "y":{
+     "exp":"5 m",
+     "val":5.0
+    },
+    "heading":{
+     "exp":"-45 degrees",
+     "val":-0.7853981633974483
+    }
+   },
+   "shoot_right":{
+    "x":{
+     "exp":"3 m",
+     "val":3.0
+    },
+    "y":{
+     "exp":"3 m",
+     "val":3.0
+    },
+    "heading":{
+     "exp":"45 degrees",
+     "val":0.7853981633974483
+    }
+   }
+  }
+ },
+ "config":{
+  "frontLeft":{
+   "x":{
+    "exp":"13.75 in",
+    "val":0.34925
+   },
+   "y":{
+    "exp":"13.75 in",
+    "val":0.34925
+   }
+  },
+  "backLeft":{
+   "x":{
+    "exp":"-13.75 in",
+    "val":-0.34925
+   },
+   "y":{
+    "exp":"13.75 in",
+    "val":0.34925
+   }
+  },
+  "mass":{
+   "exp":"150 lbs",
+   "val":68.0388555
+  },
+  "inertia":{
+   "exp":"6 kg m ^ 2",
+   "val":6.0
+  },
+  "gearing":{
+   "exp":"6.75",
+   "val":6.75
+  },
+  "radius":{
+   "exp":"2 in",
+   "val":0.0508
+  },
+  "vmax":{
+   "exp":"6000 RPM",
+   "val":628.3185307179587
+  },
+  "tmax":{
+   "exp":"9.37 N * m",
+   "val":9.37
+  },
+  "cof":{
+   "exp":"1.542",
+   "val":1.542
+  },
+  "bumper":{
+   "front":{
+    "exp":"16 in",
+    "val":0.4064
+   },
+   "side":{
+    "exp":"16 in",
+    "val":0.4064
+   },
+   "back":{
+    "exp":"16 in",
+    "val":0.4064
+   }
+  },
+  "differentialTrackWidth":{
+   "exp":"22 in",
+   "val":0.5588
+  }
+ },
+ "generationFeatures":[],
+ "codegen":{
+  "root":"home/ryan/Documents/2026-Rebuild/src",
+  "genVars":true,
+  "genTrajData":true,
+  "useChoreoLib":false
+ }
+}
