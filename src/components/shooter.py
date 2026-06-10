@@ -6,6 +6,7 @@ from phoenix6 import (
     signals,
 )
 from phoenix6.hardware import TalonFX
+from phoenix6.signals import MotorAlignmentValue
 
 from magicbot import feedback, will_reset_to
 
@@ -21,6 +22,9 @@ from lemonlib.smart import SmartProfile
 
 
 class Shooter:
+    """
+    Shooter using the Phoenix 6 API.
+    """
     right_motor: TalonFX
     left_motor: TalonFX
 
@@ -99,7 +103,7 @@ class Shooter:
             lambda: self.left_motor.configurator.apply(self.follower_motor_configs),
         )
 
-        self.left_motor.set_control(controls.Follower(self.right_motor.device_id, True))
+        self.left_motor.set_control(controls.Follower(self.right_motor.device_id, MotorAlignmentValue.OPPOSED))
 
         SmartDashboard.putData("Shooter leader_motor", self.leader_motor_mech2d)
 
@@ -140,13 +144,16 @@ class Shooter:
         """
         self.control = self.velocity_request.with_velocity(velocity)
 
-    def coast(self):
+    def coast(self) -> None:
         """
         Coasts the shooter.
         """
         self.control = self.coast_request
 
-    def execute(self):
+    def execute(self) -> None:
+        """
+        Sets the control of the right (leader) motor every robot iteration.
+        """
         self.right_motor.set_control(self.control)
 
         # refresh all status signals

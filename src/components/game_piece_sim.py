@@ -10,7 +10,6 @@ from components.shooter import Shooter
 from fuel_sim.fuel_sim import FuelSim
 
 
-
 class GamePieceSim:
     """
     Simulates fuel, hubs, collisions, and alliance points within `AdvantageScope`.
@@ -35,6 +34,9 @@ class GamePieceSim:
     shooter_height: meters
 
     def setup(self) -> None:
+        """
+        Registers a `FuelSim`, robot, intake, & shooter from injected constants.
+        """
         self._fuel_sim = FuelSim()
 
         self._fuel_sim.register_robot(
@@ -98,7 +100,7 @@ class GamePieceSim:
 
     def shoot_fuel(self) -> None:
         """
-        Shoots a single fuel object with the currently commanded velocity to the shooter.
+        Launches a fuel object using the current shooter velocity.
         """
         self._fuel_sim.launch_fuel(
             launch_velocity=self._get_ball_velocity(),
@@ -107,9 +109,10 @@ class GamePieceSim:
             launch_height=self.shooter_height
         )
 
-    def post_execute(self) -> None:
+    def execute(self) -> None:
         """
         Updates the state of the fuel sim each iteration in simulation mode.
+        This should only be executed in simulation mode to prevent performance bottlenecks.
         """
         if RobotBase.isSimulation():
             self._fuel_sim.update_sim()

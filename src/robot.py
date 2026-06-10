@@ -26,24 +26,17 @@ from lemonlib.util import (
 class MyRobot(LemonRobot):
 
     # TODO: Score controller: highest level component that uses shooter controller to shoot and swerve to aim and only shoots when it should
-
     # TODO: Shooter controller: uses shooter component to shoot and indexer
-
     drive_control: DriveControl
-
     shooter: Shooter
-
     # TODO: Indexer component
-
-    drivetrain: SwerveDrive
-
     game_piece_sim: GamePieceSim
 
+    drivetrain: SwerveDrive
     # TODO: Intake component
-
     # TODO: LED component
 
-    # greatest speed that chassis should move (not greatest possible speed)
+    # Greatest speed that chassis should move (not greatest possible speed)
     top_speed = SmartPreference(4.7)
     top_omega = SmartPreference(6.0)
 
