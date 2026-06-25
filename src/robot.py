@@ -2,13 +2,18 @@ import math
 
 from phoenix6 import CANBus
 from phoenix6.hardware import TalonFX, TalonFXS
+
 from wpimath import units
 
 import oi
+
 from components.drive_control import DriveControl
 from components.shooter import Shooter
 from components.swerve_drive import SwerveDrive
+from components.game_piece_sim import GamePieceSim
+
 from generated.tuner_constants import TunerConstants
+
 from lemonlib import LemonInput, LemonRobot
 from lemonlib.smart import SmartPreference, SmartProfile
 from lemonlib.util import (
@@ -21,22 +26,17 @@ from lemonlib.util import (
 class MyRobot(LemonRobot):
 
     # TODO: Score controller: highest level component that uses shooter controller to shoot and swerve to aim and only shoots when it should
-
     # TODO: Shooter controller: uses shooter component to shoot and indexer
-
     drive_control: DriveControl
-
     shooter: Shooter
-
     # TODO: Indexer component
+    game_piece_sim: GamePieceSim
 
     drivetrain: SwerveDrive
-
     # TODO: Intake component
-
     # TODO: LED component
 
-    # greatest speed that chassis should move (not greatest possible speed)
+    # Greatest speed that chassis should move (not greatest possible speed)
     top_speed = SmartPreference(4.7)
     top_omega = SmartPreference(6.0)
 

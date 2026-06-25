@@ -1,0 +1,12 @@
+from wpimath.units import radians
+
+
+class IntakeArm:
+    def setup(self) -> None:
+        ...
+
+    def get_angle(self) -> radians:
+        ...
+
+    def execute(self) -> None:
+        ...

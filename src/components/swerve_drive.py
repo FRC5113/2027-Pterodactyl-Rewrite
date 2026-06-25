@@ -1,15 +1,18 @@
 from magicbot import will_reset_to
+
 from phoenix6 import SignalLogger, hardware, swerve, utils
 from phoenix6.swerve import requests
+
 from wpilib import DriverStation, SmartDashboard
-from wpimath import units
+from wpimath.units import seconds, meters_per_second
 from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.kinematics import (
-    SwerveModuleState,
+    SwerveModuleState, ChassisSpeeds
 )
 from wpiutil import Sendable, SendableBuilder
 
 from generated.tuner_constants import TunerConstants
+
 from lemonlib.smart import SmartProfile
 from lemonlib.util import Alert, AlertType
 
@@ -18,8 +21,7 @@ class SwerveDrive(Sendable):
     """
     Swerve drive using the Phoenix 6 Swerve API (SwerveDrivetrain).
     """
-
-    max_speed: units.meters_per_second
+    max_speed: meters_per_second
     translation_profile: SmartProfile
     rotation_profile: SmartProfile
 
@@ -37,7 +39,6 @@ class SwerveDrive(Sendable):
     """
 
     def __init__(self) -> None:
-        self.state = None
         Sendable.__init__(self)
         SmartDashboard.putData("Swerve Drive", self)
 
@@ -60,13 +61,15 @@ class SwerveDrive(Sendable):
             "Pigeon heading has been reset.", AlertType.INFO, timeout=3.0
         )
 
-        self.has_applied_operator_perspective = False  # Keep track if we've ever applied the operator perspective before or not
+        # Keep track if we've ever applied the operator perspective before or not
+        self.has_applied_operator_perspective = False 
 
         self.state = self.drivetrain.get_state_copy()
-
         self.drivetrain.register_telemetry(self.telemeterize)
 
-    def on_enable(self):
+        self.pending_request = requests.Idle()
+
+    def on_enable(self) -> None:
         self._operator_perspective_update()  # Try to apply the operator perspective immediately on enable
 
     """
@@ -76,7 +79,25 @@ class SwerveDrive(Sendable):
     def get_module_states(
         self,
     ) -> list[SwerveModuleState]:
+        """
+        :returns: A list of `SwerveModuleState` objects for each swerve module.
+        `rtype`: SwerveModuleState
+        """
         return self.state.module_states
+    
+    def get_pose(self) -> Pose2d:
+        """
+        :returns: The estimated drivetrain pose from the swerve state.
+        :rtype: Pose2d
+        """
+        return self.state.pose
+
+    def get_chassis(self) -> ChassisSpeeds:
+        """
+        :returns: The applied drivetrain chassis from the swerve state.
+        :rtype: ChassisSpeeds
+        """
+        return self.state.speeds
 
     """
     TELEMETRY
@@ -84,9 +105,8 @@ class SwerveDrive(Sendable):
 
     def telemeterize(self, state: swerve.SwerveDrivetrain.SwerveDriveState):
         """
-        Accept the swerve drive state and telemeterize it to SignalLogger.
+        Accepts the swerve drive state and telemeterize it to `SignalLogger`.
         """
-
         # Not in phoenix 6 yet, but when we add it, we can telemeterize the full state like this:
         # SignalLogger.write_struct("DriveState/Pose", Pose2d, state.pose)
         # SignalLogger.write_struct("DriveState/Speeds", ChassisSpeeds, state.speeds)
@@ -106,9 +126,10 @@ class SwerveDrive(Sendable):
         SignalLogger.write_integer("DriveState/FailedDaqs", state.failed_daqs)
 
     def initSendable(self, builder: SendableBuilder) -> None:
+        """
+        Called during robot initialization to initialize the sendable object.
+        """
         builder.setSmartDashboardType("SwerveDrive")
-        if self.state is None:
-            return
         builder.addDoubleProperty(
             "Robot Angle",
             lambda: self.state.pose.rotation().degrees(),
@@ -119,44 +140,49 @@ class SwerveDrive(Sendable):
         ):
             _i = i
 
-            def _vel(idx=_i):
-                return self.state.module_states[idx].speed * 5
+            def _vel(idx: int = _i):
+                return self.state.module_states[idx].speed
 
-            def _ang(idx=_i):
+            def _ang(idx: int =_i):
                 return self.state.module_states[idx].angle.degrees()
 
             builder.addDoubleProperty(f"{label} Velocity", _vel, lambda _: None)
             builder.addDoubleProperty(f"{label} Angle", _ang, lambda _: None)
 
-        if self.state.module_targets is not None:
-            swerve_setpoints = []
-            for state in self.state.module_targets:
-                swerve_setpoints += [state.angle.degrees(), state.speed]
-            builder.addDoubleArrayProperty(
-                "Swerve Setpoints", lambda: swerve_setpoints, lambda _: None
-            )
-
-        if self.state.module_states is not None:
-            swerve_measurements = []
-            for ms in self.state.module_states:
-                swerve_measurements += [ms.angle.degrees(), ms.speed]
-            builder.addDoubleArrayProperty(
-                "Swerve Measurements", lambda: swerve_measurements, lambda _: None
-            )
+        builder.addDoubleArrayProperty(
+            "Swerve Setpoints", 
+            lambda: [
+                value
+                for state in self.state.module_targets
+                for value in (state.angle.degrees(), state.speed)
+            ],
+            lambda _: None
+        )
+        builder.addDoubleArrayProperty(
+            "Swerve Measurements", 
+            lambda: [
+                value
+                for state in self.state.module_states
+                for value in (state.angle.degrees(), state.speed)
+            ],
+            lambda _: None
+        )
 
     """
     CONTROL METHODS
     """
 
     def apply_control(self, control: requests.SwerveRequest) -> None:
-        """Apply a swerve request to the drivetrain. This will be applied on the next call to execute()."""
+        """
+        Apply a swerve request to the drivetrain. This will be applied on the next call to execute().
+        """
         self.stopped = False
         self.pending_request = control
 
     def addVisionPoseEstimate(
         self,
         pose: Pose2d,
-        timestamp: units.seconds,
+        timestamp: seconds,
         std_devs: tuple[float, float, float],
     ) -> None:
         """
@@ -166,26 +192,24 @@ class SwerveDrive(Sendable):
             pose, utils.fpga_to_current_time(timestamp), std_devs
         )
 
-    def curr_direction_forward(self):
+    def curr_direction_forward(self) -> None:
         """
-        Resets the headin got the direction the robot is currently facing.
+        Resets the direction the robot is currently facing.
         """
         self.drivetrain.seed_field_centric()
 
     def set_angle_relative(self, angle: Rotation2d):
         """
-        If the robot is facing some other angle relative to the driver’s forward direction.
+        If the robot is facing some other angle relative to the drivers forward direction.
         For example, if the robot is facing left, then pass in an angle of +90 degrees (counter-clockwise).
         """
-
         self.drivetrain.set_operator_perspective_forward(angle)
 
-    def set_blue_alliance_perspective(self):
+    def reset_heading_to_blue_origin(self) -> None:
         """
         When using a path planning library such as PathPlanner or Choreo, the paths often operate using the BlueAlliancePerspective
         Vision libraries similarly often operate using a BlueAlliancePerspective heading.
         """
-
         self.drivetrain.reset_rotation(Rotation2d())
 
     def set_pose(self, pose: Pose2d):
@@ -193,14 +217,13 @@ class SwerveDrive(Sendable):
         When using a path planning library such as PathPlanner or Choreo, the paths often reset the robot’s pose at the start of the path.
         Vision libraries similarly often operate using a pose.
         """
-
         self.drivetrain.reset_pose(pose)
 
     """
     EXECUTE
     """
 
-    def _operator_perspective_update(self):
+    def _operator_perspective_update(self) -> None:
         """
         Periodically try to apply the operator perspective
         if we haven't yet or if we're currently disabled.
@@ -213,15 +236,18 @@ class SwerveDrive(Sendable):
                     if alliance_color == DriverStation.Alliance.kRed
                     else self.BLUE_ALLIANCE_PERSPECTIVE_ROTATION
                 )
-                self._has_applied_operator_perspective = True
+                self.has_applied_operator_perspective = True
 
     def execute(self) -> None:
+        """
+        Requests the pending request to the swerve drivetrain every robot iteration.
+        """
         self._operator_perspective_update()
-
-        self.state = self.drivetrain.get_state_copy()
 
         if self.stopped:
             self.drivetrain.set_control(requests.Idle())
             return
 
         self.drivetrain.set_control(self.pending_request)
+
+        self.state = self.drivetrain.get_state_copy()
