@@ -1,4 +1,5 @@
 import phoenix6
+from magicbotmod import feedback, will_reset_to
 from phoenix6 import (
     BaseStatusSignal,
     configs,
@@ -7,14 +8,7 @@ from phoenix6 import (
 )
 from phoenix6.hardware import TalonFX
 from phoenix6.signals import MotorAlignmentValue
-
-from magicbot import feedback, will_reset_to
-
-from wpilib import (
-    Mechanism2d,
-    SmartDashboard,
-    RobotController
-)
+from wpilib import RobotController
 from wpimath import units
 
 from lemonlib.ctre import tryUntilOk
@@ -25,6 +19,7 @@ class Shooter:
     """
     Shooter using the Phoenix 6 API.
     """
+
     right_motor: TalonFX
     left_motor: TalonFX
 
@@ -87,12 +82,6 @@ class Shooter:
         self.coast_request = controls.CoastOut()
         self.voltage_request = controls.VoltageOut(0.0)
 
-        # Mechanism2d visualization for motor leader_motor
-        self.leader_motor_mech2d = Mechanism2d(2, 2)
-        self.leader_motor_shooter_mech2d = self.leader_motor_mech2d.getRoot(
-            "leader_motor Root", 1, 1
-        ).appendLigament("leader_motor", 1, 0)
-
         # apply device configs
         tryUntilOk(
             self._NUM_CONFIG_ATTEMPTS,
@@ -103,9 +92,9 @@ class Shooter:
             lambda: self.left_motor.configurator.apply(self.follower_motor_configs),
         )
 
-        self.left_motor.set_control(controls.Follower(self.right_motor.device_id, MotorAlignmentValue.OPPOSED))
-
-        SmartDashboard.putData("Shooter leader_motor", self.leader_motor_mech2d)
+        self.left_motor.set_control(
+            controls.Follower(self.right_motor.device_id, MotorAlignmentValue.OPPOSED)
+        )
 
     """
     INFORMATIONAL METHODS
@@ -126,13 +115,13 @@ class Shooter:
         :rtype: float
         """
         return self.leader_motor_torque_current.value
-    
+
     def get_applied_voltage(self) -> units.volts:
         """
         :returns: The applied voltage to the shooter.
         :rtype: volts
         """
-        return self.left_motor.get() * RobotController.getBatteryVoltage()
+        return self.left_motor.getThrottle() * RobotController.getBatteryVoltage()
 
     """
     CONTROL METHODS
@@ -160,8 +149,4 @@ class Shooter:
         BaseStatusSignal.refresh_all(
             self.leader_motor_velocity,
             self.leader_motor_torque_current,
-        )
-
-        self.leader_motor_shooter_mech2d.setLength(
-            self.leader_motor_velocity.value / 100.0 * self.shooter_gear_ratio
         )

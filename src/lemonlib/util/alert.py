@@ -2,7 +2,7 @@ from enum import Enum
 from logging import Logger
 from typing import List
 
-from wpilib import DriverStation, SmartDashboard, Timer
+from wpilib import DriverStation, SmartDashboard, Timer, DriverStationBackend
 from wpiutil import Sendable, SendableBuilder
 
 from .elastic import Notification, send_notification
@@ -54,7 +54,7 @@ class Alert:
             active (bool): True to activate, False to deactivate.
         """
         if active and not self.active:
-            self.active_start_time = Timer.getFPGATimestamp()
+            self.active_start_time = Timer.getMonotonicTimestamp()
 
             # Log the alert based on its type.
             match self.type:
@@ -99,9 +99,9 @@ class Alert:
         if (
             self.active
             and self.text != text
-            and Timer.getFPGATimestamp() - self.last_log > 1.0
+            and Timer.getMonotonicTimestamp() - self.last_log > 1.0
         ):
-            self.last_log = Timer.getFPGATimestamp()
+            self.last_log = Timer.getMonotonicTimestamp()
             match self.type:
                 case AlertType.ERROR:
                     AlertManager.logger.error(text)
@@ -130,7 +130,7 @@ class AlertManager(Sendable):
         """
         Sendable.__init__(self)
         AlertManager.logger = logger
-        if enabled and not DriverStation.isFMSAttached():
+        if enabled and not DriverStationBackend.isFMSAttached():
             SmartDashboard.putData("Alerts", self)
 
     def initSendable(self, builder: SendableBuilder) -> None:
@@ -159,7 +159,7 @@ class AlertManager(Sendable):
             List[str]: List of alert messages.
         """
         alerts = []
-        timestamp = Timer.getFPGATimestamp()
+        timestamp = Timer.getMonotonicTimestamp()
         for alert in AlertManager.alerts:
             if not alert.active:
                 continue

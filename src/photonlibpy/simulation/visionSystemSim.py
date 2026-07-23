@@ -3,10 +3,9 @@ import typing
 import wpilib
 from robotpy_apriltag import AprilTagFieldLayout
 from wpilib import Field2d
-from wpimath.geometry import Pose2d, Pose3d, Transform3d
 
 # TODO(auscompgeek): update import path when RobotPy re-exports are fixed
-from wpimath.interpolation._interpolation import TimeInterpolatablePose3dBuffer
+from wpimath import Pose2d, Pose3d, TimeInterpolatablePose3dBuffer, Transform3d
 from wpimath.units import seconds
 
 from ..estimation import TargetModel
@@ -69,7 +68,7 @@ class VisionSystemSim:
                 self.bufferLength
             )
             self.camTrfMap[cameraSim].addSample(
-                wpilib.Timer.getFPGATimestamp(), Pose3d() + robotToCamera
+                wpilib.Timer.getMonotonicTimestamp(), Pose3d() + robotToCamera
             )
 
     def clearCameras(self) -> None:
@@ -92,7 +91,7 @@ class VisionSystemSim:
     def getRobotToCamera(
         self,
         cameraSim: PhotonCameraSim,
-        time: seconds = wpilib.Timer.getFPGATimestamp(),
+        time: seconds = wpilib.Timer.getMonotonicTimestamp(),
     ) -> Transform3d | None:
         """Get a simulated camera's position relative to the robot. If the requested camera is invalid, an
         empty optional is returned.
@@ -115,7 +114,7 @@ class VisionSystemSim:
     def getCameraPose(
         self,
         cameraSim: PhotonCameraSim,
-        time: seconds = wpilib.Timer.getFPGATimestamp(),
+        time: seconds = wpilib.Timer.getMonotonicTimestamp(),
     ) -> Pose3d | None:
         """Get a simulated camera's position on the field. If the requested camera is invalid, an empty
         optional is returned.
@@ -147,7 +146,7 @@ class VisionSystemSim:
         """
         if cameraSim in self.camTrfMap:
             self.camTrfMap[cameraSim].addSample(
-                wpilib.Timer.getFPGATimestamp(), Pose3d() + robotToCamera
+                wpilib.Timer.getMonotonicTimestamp(), Pose3d() + robotToCamera
             )
             return True
         else:
@@ -155,7 +154,7 @@ class VisionSystemSim:
 
     def resetCameraTransforms(self, cameraSim: PhotonCameraSim | None = None) -> None:
         """Reset the transform history for this camera to just the current transform."""
-        now = wpilib.Timer.getFPGATimestamp()
+        now = wpilib.Timer.getMonotonicTimestamp()
 
         def resetSingleCamera(self, cameraSim: PhotonCameraSim) -> bool:
             if cameraSim in self.camTrfMap:
@@ -241,7 +240,7 @@ class VisionSystemSim:
         return removedList
 
     def getRobotPose(
-        self, timestamp: seconds = wpilib.Timer.getFPGATimestamp()
+        self, timestamp: seconds = wpilib.Timer.getMonotonicTimestamp()
     ) -> Pose3d | None:
         """Get the robot pose in meters saved by the vision system at this timestamp.
 
@@ -257,7 +256,7 @@ class VisionSystemSim:
         assert type(robotPose) is Pose3d
 
         self.robotPoseBuffer.clear()
-        self.robotPoseBuffer.addSample(wpilib.Timer.getFPGATimestamp(), robotPose)
+        self.robotPoseBuffer.addSample(wpilib.Timer.getMonotonicTimestamp(), robotPose)
 
     def getDebugField(self) -> Field2d:
         return self.dbgField
@@ -280,7 +279,7 @@ class VisionSystemSim:
             self.dbgField.getObject(targetType).setPoses(posesToAdd)
 
         # save "real" robot poses over time
-        now = wpilib.Timer.getFPGATimestamp()
+        now = wpilib.Timer.getMonotonicTimestamp()
         self.robotPoseBuffer.addSample(now, robotPose)
         self.dbgField.setRobotPose(robotPose.toPose2d())
 

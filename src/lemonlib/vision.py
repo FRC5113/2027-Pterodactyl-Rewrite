@@ -1,6 +1,6 @@
 from photonlibpy.photonCamera import PhotonCamera, setVersionCheckEnabled
 from robotpy_apriltag import AprilTagFieldLayout
-from wpimath.geometry import Transform3d
+from wpimath import Transform3d
 
 
 class LemonCamera(PhotonCamera):

@@ -1,6 +1,6 @@
 import math
 
-from wpimath.geometry import Pose3d, Translation3d
+from wpimath import Pose3d, Translation3d
 
 from ..estimation.targetModel import TargetModel
 

@@ -21,7 +21,7 @@ import hal
 import wpilib
 import wpimath.units
 from robotpy_apriltag import AprilTagFieldLayout
-from wpimath.geometry import (
+from wpimath import (
     Pose2d,
     Pose3d,
     Rotation2d,
@@ -30,7 +30,7 @@ from wpimath.geometry import (
     Translation2d,
     Translation3d,
 )
-from wpimath.interpolation import TimeInterpolatableRotation2dBuffer
+from wpimath import TimeInterpolatableRotation2dBuffer
 
 from .estimatedRobotPose import EstimatedRobotPose
 from .targeting.photonPipelineResult import PhotonPipelineResult

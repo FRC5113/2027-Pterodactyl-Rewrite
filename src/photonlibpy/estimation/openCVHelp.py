@@ -4,7 +4,7 @@ from typing import Any
 
 import cv2 as cv
 import numpy as np
-from wpimath.geometry import Rotation3d, Transform3d, Translation3d
+from wpimath import Rotation3d, Transform3d, Translation3d
 
 from ..targeting import PnpResult, TargetCorner
 from .rotTrlTransform3d import RotTrlTransform3d

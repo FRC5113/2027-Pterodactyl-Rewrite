@@ -1,6 +1,6 @@
-from magicbot import StateMachine, state, will_reset_to
+from magicbotmod import StateMachine, state, will_reset_to
 from phoenix6 import swerve, units
-from wpimath.geometry import Rotation2d
+from wpimath import Rotation2d
 
 from components.swerve_drive import SwerveDrive
 

@@ -2,7 +2,8 @@ import colorsys
 from typing import Tuple
 
 import wpimath.units
-from wpilib import AddressableLED, Color, LEDPattern, RobotController, Timer
+from wpilib import AddressableLED, LEDPattern, RobotController, Timer
+from wpiutil import Color
 
 
 class LEDController:
@@ -128,7 +129,7 @@ class LEDController:
             colors = [colors]
 
         # Get the current time
-        current_time = Timer.getFPGATimestamp()
+        current_time = Timer.getMonotonicTimestamp()
         length = self.length
         buffer = self.buffer
 
@@ -164,7 +165,7 @@ class LEDController:
         hertz: wpimath.units.hertz = 1,
     ):
         """Moves a fixed-size multicolor block across the strip using RobotController.getTime() for timing."""
-        current_time = Timer.getFPGATimestamp()
+        current_time = Timer.getMonotonicTimestamp()
         length = self.length
         buffer = self.buffer
 
@@ -211,7 +212,7 @@ class LEDController:
         :param color2: The second RGB color. Defaults to off (0, 0, 0).
         :param hertz: Blink frequency in Hz (full cycles per second). Default is 2 Hz.
         """
-        current_time = Timer.getFPGATimestamp()
+        current_time = Timer.getMonotonicTimestamp()
         first = (int(current_time * hertz * 2) % 2) == 0
         if first:
             self.set_solid_color(color1)

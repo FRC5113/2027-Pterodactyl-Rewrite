@@ -1,4 +1,4 @@
-from wpilib import Preferences, RobotController
+from wpilib import Preferences, Timer
 
 
 class SmartPreference(object):
@@ -62,7 +62,7 @@ class SmartPreference(object):
         if self._low_bandwidth:
             return self._value
         # Only re-read from NT periodically to avoid per-cycle overhead
-        now = RobotController.getFPGATime()
+        now = Timer.getMonotonicTimestamp()
         if now - self._last_nt_read < SmartPreference._CACHE_PERIOD:
             return self._value
         self._last_nt_read = now
@@ -93,7 +93,7 @@ class SmartPreference(object):
             Preferences.setString(self._key, self._value)
         elif self._type is bool:
             Preferences.setBoolean(self._key, self._value)
-        self._last_nt_read = RobotController.getFPGATime()  # Cache is fresh after set
+        self._last_nt_read = Timer.getMonotonicTimestamp()  # Cache is fresh after set
 
     def has_changed() -> bool:
         """Returns if any SmartPreference has changed since checked.
