@@ -182,6 +182,7 @@ class MyRobot(LemonRobot):
         self.game_piece_sim = (
             GamePieceSim()
         )  # Created here as its ment for simulation only and we dont want it to run non sim
+        self.game_piece_sim.setup()
 
         def _sim_periodic():
             current_time = phoenix6.utils.get_current_time_seconds()

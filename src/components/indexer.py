@@ -27,7 +27,7 @@ class Indexer:
             signals.NeutralModeValue.COAST
         )
 
-        tryUntilOk(5, self.conveyor_motor.configurator.apply(self.config))
+        tryUntilOk(5, lambda: self.conveyor_motor.configurator.apply(self.config))
 
         self.volt_control = controls.VoltageOut(0.0)
         self.throttle_control = controls.DutyCycleOut(0.0)
@@ -55,4 +55,4 @@ class Indexer:
     def execute(self):
         self.conveyor_motor.set_control(self.conveyor_control)
 
-        BaseStatusSignal().refresh_all(self.conveyor_supply_amps)
+        BaseStatusSignal.refresh_all(self.conveyor_supply_amps)

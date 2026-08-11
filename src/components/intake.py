@@ -40,8 +40,10 @@ class Intake:
             signals.MotorArrangementValue.BRUSHED_DC
         )
 
-        tryUntilOk(5, self.left_motor.configurator.apply(self.arm_motor_config))
-        tryUntilOk(5, self.right_motor.configurator.apply(self.arm_motor_config))
+        tryUntilOk(5, lambda: self.left_motor.configurator.apply(self.arm_motor_config))
+        tryUntilOk(
+            5, lambda: self.right_motor.configurator.apply(self.arm_motor_config)
+        )
 
     def _config_spin_motor(self):
         # Configure motors
@@ -49,7 +51,7 @@ class Intake:
         spin_config.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
         spin_config.current_limits.stator_current_limit = self.spin_amps
         spin_config.current_limits.stator_current_limit_enable = True
-        tryUntilOk(5, self.spin_motor.configurator.apply(spin_config))
+        tryUntilOk(5, lambda: self.spin_motor.configurator.apply(spin_config))
 
     """
     CONTROL METHODS

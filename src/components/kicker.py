@@ -27,8 +27,8 @@ class Kicker:
             signals.NeutralModeValue.BRAKE
         )
 
-        tryUntilOk(5, self.right_motor.configurator.apply(self.config))
-        tryUntilOk(5, self.left_motor.configurator.apply(self.config))
+        tryUntilOk(5, lambda: self.right_motor.configurator.apply(self.config))
+        tryUntilOk(5, lambda: self.left_motor.configurator.apply(self.config))
 
         self.volt_control = controls.VoltageOut(0.0)
         self.throttle_control = controls.DutyCycleOut(0.0)

@@ -28,6 +28,7 @@ class Shooter:
     _NUM_CONFIG_ATTEMPTS = 2
 
     control = will_reset_to(controls.CoastOut())
+    req_velocity = will_reset_to(0.0)
 
     def setup(self) -> None:
         # Configs common across all TalonFX motors.
@@ -111,7 +112,7 @@ class Shooter:
         :returns: The requested velocity of the leader_motor motor
         :rtype: float
         """
-        return self.control.velocity
+        return self.req_velocity
 
     @feedback
     def get_torque_current(self) -> units.ampere:
@@ -141,6 +142,7 @@ class Shooter:
         Drives the flywheel to the provided velocity setpoint.
         """
         self.control = self.velocity_request.with_velocity(velocity)
+        self.req_velocity = velocity
 
     def coast(self) -> None:
         """
