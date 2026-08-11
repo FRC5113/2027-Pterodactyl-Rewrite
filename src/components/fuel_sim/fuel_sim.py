@@ -1,6 +1,6 @@
 import math
 import random
-from typing import Callable, List, Optional
+from collections.abc import Callable
 
 from ntcore import NetworkTableInstance
 from wpilib import Timer
@@ -24,7 +24,7 @@ class FuelSim:
         Representation of a single fuel object in the simulation.
         """
 
-        def __init__(self, pos: Translation3d, vel: Optional[Translation3d] = None):
+        def __init__(self, pos: Translation3d, vel: Translation3d | None = None):
             self.pos = pos
             self.vel = vel if vel is not None else Translation3d()
 
@@ -34,8 +34,8 @@ class FuelSim:
             subticks: int,
             blue_hub: "FuelSim.Hub",
             red_hub: "FuelSim.Hub",
-            relevant_lines: Optional[List[int]] = None,
-            relevant_trenches: Optional[List[int]] = None,
+            relevant_lines: list[int] | None = None,
+            relevant_trenches: list[int] | None = None,
         ) -> None:
             """
             Updates the fuel position and velocity each cycle.
@@ -111,8 +111,8 @@ class FuelSim:
             subticks: int,
             blue_hub: "FuelSim.Hub",
             red_hub: "FuelSim.Hub",
-            relevant_lines: Optional[List[int]] = None,
-            relevant_trenches: Optional[List[int]] = None,
+            relevant_lines: list[int] | None = None,
+            relevant_trenches: list[int] | None = None,
         ) -> None:
             """
             Handles all field collisions.
@@ -192,7 +192,7 @@ class FuelSim:
                 )
 
         def _handle_trench_collisions(
-            self, relevant_trenches: Optional[List[int]] = None
+            self, relevant_trenches: list[int] | None = None
         ) -> None:
             """
             Handles collisions with trenches.
@@ -377,34 +377,32 @@ class FuelSim:
             table_key: NetworkTable key to log fuel positions to as an array of Translation3d structs.
         """
         # Initialize grid
-        self.grid: List[List[List["FuelSim.Fuel"]]] = [
+        self.grid: list[list[list[FuelSim.Fuel]]] = [
             [[] for _ in range(self.GRID_ROWS)] for _ in range(self.GRID_COLS)
         ]
 
         # Pre-compute which line segments are relevant to each grid cell
-        self.grid_to_lines: List[List[List[int]]] = [
+        self.grid_to_lines: list[list[list[int]]] = [
             [[] for _ in range(self.GRID_ROWS)] for _ in range(self.GRID_COLS)
         ]
 
         # Pre-compute which trench rectangles are relevant to each grid cell
-        self.grid_to_trenches: List[List[List[int]]] = [
+        self.grid_to_trenches: list[list[list[int]]] = [
             [[] for _ in range(self.GRID_ROWS)] for _ in range(self.GRID_COLS)
         ]
 
         # Track dirty cells to avoid clearing all cells every frame
         self.dirty_cells: list[tuple[int, int]] = []
-        self.active_cells: List[List["FuelSim.Fuel"]] = []
-        self.fuels: List["FuelSim.Fuel"] = []
+        self.active_cells: list[list[FuelSim.Fuel]] = []
+        self.fuels: list[FuelSim.Fuel] = []
         self.running = False
         self.simulate_air_resistance = False
-        self.robot_pose_supplier: Optional[Callable[[], Pose2d]] = None
-        self.robot_field_speeds_supplier: Optional[Callable[[], ChassisVelocities]] = (
-            None
-        )
+        self.robot_pose_supplier: Callable[[], Pose2d] | None = None
+        self.robot_field_speeds_supplier: Callable[[], ChassisVelocities] | None = None
         self.robot_width = 0.0  # size along the robot's y axis
         self.robot_length = 0.0  # size along the robot's x axis
         self.bumper_height = 0.0
-        self.intakes: List["FuelSim.SimIntake"] = []
+        self.intakes: list[FuelSim.SimIntake] = []
         self.subticks = 5
         self.logging_freq_hz = 10
         self.logging_timer = Timer()
@@ -725,7 +723,7 @@ class FuelSim:
             launch_pose.translation(), Translation3d(x_vel, y_vel, vertical_vel)
         )
 
-    def _handle_fuel_collisions(self, fuels: List["FuelSim.Fuel"]) -> None:
+    def _handle_fuel_collisions(self, fuels: list["FuelSim.Fuel"]) -> None:
         """
         Handle collisions between fuel objects.
         """
@@ -833,7 +831,7 @@ class FuelSim:
         if robot_vel.dot(normal) > 0:
             fuel.add_impulse(Translation3d(normal * robot_vel.dot(normal)))
 
-    def _handle_robot_collisions(self, fuels: List["FuelSim.Fuel"]) -> None:
+    def _handle_robot_collisions(self, fuels: list["FuelSim.Fuel"]) -> None:
         """
         Handles all collisions with the robot. Only checks fuels near the robot.
         """
@@ -865,7 +863,7 @@ class FuelSim:
 
             self._handle_robot_collision(fuel, robot, robot_vel)
 
-    def _handle_intakes(self, fuels: List["FuelSim.Fuel"]) -> None:
+    def _handle_intakes(self, fuels: list["FuelSim.Fuel"]) -> None:
         """
         Handles intakes removing fuel from the field.
         """
@@ -894,8 +892,8 @@ class FuelSim:
         x_max: float,
         y_min: float,
         y_max: float,
-        able_to_intake: Optional[Callable[[], bool]] = None,
-        intake_callback: Optional[Callable[[], None]] = None,
+        able_to_intake: Callable[[], bool] | None = None,
+        intake_callback: Callable[[], None] | None = None,
     ) -> None:
         """
         Registers an intake with the fuel simulator.

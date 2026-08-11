@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 
 from phoenix6.status_code import StatusCode
 

@@ -1,12 +1,12 @@
-from typing import Callable, Dict, List
+from collections.abc import Callable
 
 from wpilib import DriverStationBackend, Timer
 
-import magicbotmod
 from lemonlib.smart import SmartNT, SmartPreference
+from modified_libs import magicbot
 
 
-class LemonRobot(magicbotmod.MagicRobot):
+class LemonRobot(magicbot.MagicRobot):
     """
     Wrapper for the magicbot robot class to allow for command-based
     functionality. This class is used to create a robot that can be
@@ -24,17 +24,17 @@ class LemonRobot(magicbotmod.MagicRobot):
     def __init__(self):
         super().__init__()
 
-        self._periodic_callbacks: List[List] = []
+        self._periodic_callbacks: list[list] = []
 
         self.loop_time = self.control_loop_wait_time
         self._last_watchdog_profile_time = 0.0
         self._overrun_count = 0
 
         # Profiling storage
-        self._last_overrun_epochs: Dict[str, float] = {}
+        self._last_overrun_epochs: dict[str, float] = {}
 
-        self._epoch_ema_all: Dict[str, float] = {}
-        self._epoch_ema_overrun: Dict[str, float] = {}
+        self._epoch_ema_all: dict[str, float] = {}
+        self._epoch_ema_overrun: dict[str, float] = {}
 
         self._smart_nt = SmartNT("LemonRobot")
 
@@ -169,8 +169,7 @@ class LemonRobot(magicbotmod.MagicRobot):
                     total_last = 0.0
                     for v in last_overrun.values():
                         total_last += v
-                        if v > max_last:
-                            max_last = v
+                        max_last = max(max_last, v)
 
                     self._smart_nt.put_number(
                         "Watchdog LastOverrun/Max", round(max_last, 6)
@@ -189,8 +188,7 @@ class LemonRobot(magicbotmod.MagicRobot):
                     total_all = 0.0
                     for v in ema_all.values():
                         total_all += v
-                        if v > max_all:
-                            max_all = v
+                        max_all = max(max_all, v)
 
                     self._smart_nt.put_number("Watchdog EMA/Max", round(max_all, 6))
                     self._smart_nt.put_number("Watchdog EMA/Total", round(total_all, 6))
@@ -203,8 +201,7 @@ class LemonRobot(magicbotmod.MagicRobot):
                     total_or = 0.0
                     for v in ema_overrun.values():
                         total_or += v
-                        if v > max_or:
-                            max_or = v
+                        max_or = max(max_or, v)
 
                     self._smart_nt.put_number(
                         "Watchdog EMAOverrun/Max", round(max_or, 6)

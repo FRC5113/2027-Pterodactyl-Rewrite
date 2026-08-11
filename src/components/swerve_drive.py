@@ -15,13 +15,12 @@ from wpimath import (
     SwerveModulePosition,
     SwerveModuleVelocity,
 )
-from wpimath.units import meters_per_second, seconds
 from wpiutil import Color, Color8Bit
 
 from generated.tuner_constants import TunerConstants
 from lemonlib.smart import SmartProfile
 from lemonlib.util import Alert, AlertType
-from magicbotmod import will_reset_to
+from modified_libs.magicbot import will_reset_to
 
 
 class SwerveDrive:  # (Sendable):
@@ -29,7 +28,7 @@ class SwerveDrive:  # (Sendable):
     Swerve drive using the Phoenix 6 Swerve API (SwerveDrivetrain).
     """
 
-    max_speed: meters_per_second
+    max_speed: units.meters_per_second
     translation_profile: SmartProfile
     rotation_profile: SmartProfile
 
@@ -173,7 +172,7 @@ class SwerveDrive:  # (Sendable):
     def addVisionPoseEstimate(
         self,
         pose: Pose2d,
-        timestamp: seconds,
+        timestamp: units.second,
         std_devs: tuple[float, float, float],
     ) -> None:
         """

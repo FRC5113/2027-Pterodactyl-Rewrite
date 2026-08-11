@@ -1,18 +1,17 @@
-import phoenix6
 from phoenix6 import (
     BaseStatusSignal,
     configs,
     controls,
     signals,
+    units,
 )
 from phoenix6.hardware import TalonFX
 from phoenix6.signals import MotorAlignmentValue
 from wpilib import RobotController
-from wpimath import units
 
 from lemonlib.ctre import tryUntilOk
 from lemonlib.smart import SmartProfile
-from magicbotmod import feedback, will_reset_to
+from modified_libs.magicbot import feedback, will_reset_to
 
 
 class Shooter:
@@ -22,9 +21,9 @@ class Shooter:
 
     shooter_profile: SmartProfile
     shooter_gear_ratio: float
-    shooter_stator_amps: units.amperes
-    shooter_supply_amps: units.amperes
-    shooter_peak_amps: units.amperes
+    shooter_stator_amps: units.ampere
+    shooter_supply_amps: units.ampere
+    shooter_peak_amps: units.ampere
 
     _NUM_CONFIG_ATTEMPTS = 2
 
@@ -73,6 +72,7 @@ class Shooter:
         # device status signals
         self.leader_motor_velocity = self.right_motor.get_velocity(False)
         self.leader_motor_torque_current = self.right_motor.get_torque_current(False)
+        self.leader_motor_supply_amps = self.right_motor.get_supply_current(False)
 
         # controls used by the leader motors
         self.velocity_request = controls.VelocityVoltage(0.0)
@@ -98,7 +98,7 @@ class Shooter:
     """
 
     @feedback
-    def get_velocity(self) -> float:
+    def get_velocity(self) -> units.rotations_per_second:
         """
         :returns: The velocity of the leader_motor motor
         :rtype: float
@@ -106,7 +106,7 @@ class Shooter:
         return self.leader_motor_velocity.value
 
     @feedback
-    def get_requested_velocity(self) -> float:
+    def get_requested_velocity(self) -> units.rotations_per_second:
         """
         :returns: The requested velocity of the leader_motor motor
         :rtype: float
@@ -114,25 +114,29 @@ class Shooter:
         return self.control.velocity
 
     @feedback
-    def get_torque_current(self) -> float:
+    def get_torque_current(self) -> units.ampere:
         """
         :returns: The torque_current of the leader_motor motor
         :rtype: float
         """
         return self.leader_motor_torque_current.value
 
-    def get_applied_voltage(self) -> units.volts:
+    def get_applied_voltage(self) -> units.volt:
         """
         :returns: The applied voltage to the shooter.
         :rtype: volts
         """
         return self.left_motor.getThrottle() * RobotController.getBatteryVoltage()
 
+    @feedback
+    def get_supply_amps(self):
+        return self.leader_motor_supply_amps.value
+
     """
     CONTROL METHODS
     """
 
-    def set_velocity(self, velocity: phoenix6.units.rotations_per_second):
+    def set_velocity(self, velocity: units.rotations_per_second):
         """
         Drives the flywheel to the provided velocity setpoint.
         """
@@ -144,6 +148,9 @@ class Shooter:
         """
         self.control = self.coast_request
 
+    def set_voltage(self, volts: units.volt):
+        self.control = self.voltage_request(volts)
+
     def execute(self) -> None:
         """
         Sets the control of the right (leader) motor every robot iteration.
@@ -154,4 +161,5 @@ class Shooter:
         BaseStatusSignal.refresh_all(
             self.leader_motor_velocity,
             self.leader_motor_torque_current,
+            self.leader_motor_supply_amps,
         )

@@ -1,5 +1,4 @@
 import colorsys
-from typing import Tuple
 
 import wpimath.units
 from wpilib import AddressableLED, LEDPattern, RobotController, Timer
@@ -43,7 +42,7 @@ class LEDController:
     def _write_data(self, index: int, color: Color):
         self.buffer[index].setLED(color)
 
-    def set_solid_color(self, color: Tuple[int, int, int]):
+    def set_solid_color(self, color: tuple[int, int, int]):
         """Sets the entire LED strip to a solid color."""
         if color == self.solid_color:
             return
@@ -54,7 +53,7 @@ class LEDController:
             led.setRGB(r, g, b)
         self.led.setData(self.buffer)
 
-    def set_pixel(self, index: int, color: Tuple[int, int, int]):
+    def set_pixel(self, index: int, color: tuple[int, int, int]):
         """Sets the color of a single LED pixel."""
         self._reset_move_cache()
         self.solid_color = None
@@ -63,7 +62,7 @@ class LEDController:
         self.led.setData(self.buffer)
 
     def set_gradient(
-        self, start_color: Tuple[int, int, int], end_color: Tuple[int, int, int]
+        self, start_color: tuple[int, int, int], end_color: tuple[int, int, int]
     ):
         """Custom preset that Sets a gradient from start_color to end_color across the LED strip."""
         self._reset_move_cache()
@@ -202,8 +201,8 @@ class LEDController:
 
     def blink(
         self,
-        color1: Tuple[int, int, int],
-        color2: Tuple[int, int, int] = (0, 0, 0),
+        color1: tuple[int, int, int],
+        color2: tuple[int, int, int] = (0, 0, 0),
         hertz: wpimath.units.hertz = 2,
     ):
         """Blinks the entire strip between two colors at the given frequency.

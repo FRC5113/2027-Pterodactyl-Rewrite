@@ -4,14 +4,15 @@ from wpilib import Preferences, SmartDashboard
 from wpimath import (
     ArmFeedforward,
     ElevatorFeedforward,
+    LinearSystem_2_2_2,
     LTVUnicycleController,
     PIDController,
     ProfiledPIDController,
     ProfiledPIDControllerRadians,
     SimpleMotorFeedforwardMeters,
+    TrapezoidProfile,
+    TrapezoidProfileRadians,
 )
-from wpimath import LinearSystem_2_2_2
-from wpimath import TrapezoidProfile, TrapezoidProfileRadians
 from wpimath.units import meters, seconds
 from wpiutil import Sendable, SendableBuilder
 

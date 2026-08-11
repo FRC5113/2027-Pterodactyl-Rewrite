@@ -1,20 +1,20 @@
 import math
 
 import phoenix6
-from phoenix6 import CANBus, SignalLogger
+from phoenix6 import CANBus, SignalLogger, units
 from phoenix6.hardware import TalonFX, TalonFXS
 from wpilib import Gamepad, Notifier, RobotController
-from wpimath import units
 
 import oi
-from components.drive_control import DriveControl
-from components.game_piece_sim import GamePieceSim
 from components.indexer import Indexer
 from components.intake import Intake
 from components.kicker import Kicker
 from components.leds import LEDStrip
 from components.shooter import Shooter
 from components.swerve_drive import SwerveDrive
+from controllers.drive_control import DriveControl
+from controllers.game_piece_sim import GamePieceSim
+from controllers.shooter_controller import ShooterController
 from generated.tuner_constants import TunerConstants
 from lemonlib import LemonRobot
 from lemonlib.smart import SmartPreference, SmartProfile
@@ -26,9 +26,8 @@ from lemonlib.util import (
 
 
 class MyRobot(LemonRobot):
-    game_piece_sim: GamePieceSim
     # TODO: Score controller: highest level component that uses shooter controller to shoot and swerve to aim and only shoots when it should
-    # TODO: Shooter controller: uses shooter component to shoot and indexer
+    shooter_controller: ShooterController
     drive_control: DriveControl
 
     drivetrain: SwerveDrive
@@ -97,8 +96,8 @@ class MyRobot(LemonRobot):
         self.intake_left_motor = TalonFXS(52, self.intake_canbus)
         self.intake_right_motor = TalonFXS(53, self.intake_canbus)
 
-        self.intake_spin_amps: units.amperes = 60.0
-        self.intake_arm_amps: units.amperes = 24.0
+        self.intake_spin_amps: units.ampere = 80.0
+        self.intake_arm_amps: units.ampere = 24.0
 
         """
         SHOOTER
@@ -110,9 +109,9 @@ class MyRobot(LemonRobot):
         self.shooter_right_motor = TalonFX(3, self.shooter_canbus)
 
         self.shooter_gear_ratio = 1.6
-        self.shooter_stator_amps: units.amperes = 120.0
-        self.shooter_supply_amps: units.amperes = 70.0
-        self.shooter_peak_amps: units.amperes = 140.0
+        self.shooter_stator_amps: units.ampere = 120.0
+        self.shooter_supply_amps: units.ampere = 70.0
+        self.shooter_peak_amps: units.ampere = 140.0
 
         self.shooter_angle = 23  # degrees
 
@@ -134,11 +133,15 @@ class MyRobot(LemonRobot):
         """
         self.indexer_canbus = CANBus.systemcore(2)
 
-        self.indexer_left_kicker_motor = TalonFXS(4, self.shooter_canbus)
-        self.indexer_right_kicker_motor = TalonFXS(5, self.shooter_canbus)
         self.indexer_conveyor_motor = TalonFXS(6, self.indexer_canbus)
-        self.indexer_kicker_amps: units.amperes = 40.0
-        self.indexer_conveyor_amps: units.amperes = 20.0
+        self.indexer_conveyor_amps: units.ampere = 20.0
+
+        """
+        KICKER
+        """
+        self.kicker_left_motor = TalonFXS(4, self.shooter_canbus)
+        self.kicker_right_motor = TalonFXS(5, self.shooter_canbus)
+        self.kicker_amps: units.ampere = 40.0
 
         """
         MISCELLANEOUS
@@ -173,6 +176,12 @@ class MyRobot(LemonRobot):
         self.oi = oi.SingleOI(self.primary)
 
     def _simulationInit(self):
+        """
+        This is a temp way to do simulation as physics.py is not implemented in the alpha version of 2027 that it is written in
+        """
+        self.game_piece_sim = (
+            GamePieceSim()
+        )  # Created here as its ment for simulation only and we dont want it to run non sim
 
         def _sim_periodic():
             current_time = phoenix6.utils.get_current_time_seconds()
@@ -183,34 +192,62 @@ class MyRobot(LemonRobot):
             self.drivetrain.drivetrain.update_sim_state(
                 delta_time, RobotController.getBatteryVoltage()
             )
+            self.game_piece_sim.execute()  # only executes in sim
 
         # Run simulation at a faster rate so PID gains behave more reasonably
         self._last_sim_time = phoenix6.utils.get_current_time_seconds()
         self._sim_notifier = Notifier(_sim_periodic)
         self._sim_notifier.startPeriodic(self._SIM_LOOP_PERIOD)
 
-        # self.game_piece_sim.spawn_fuel_line()
+        self.game_piece_sim.spawn_fuel_line()
 
     """
     PERIODIC
     """
 
-    def enabledperiodic(self):
-        self.drive_control.engage()
-
     def teleopPeriodic(self) -> None:
         """
         SWERVE
         """
+        with self.consumeExceptions():
+            # if both 25% else 50 or 75
+            if self.oi.drive_limit_speed50() and self.oi.drive_limit_speed75():
+                mult = 0.25
+            elif self.oi.drive_limit_speed75():
+                mult = 0.75
+            elif self.oi.drive_limit_speed50():
+                mult = 0.5
+            else:
+                mult = 1.0
 
-        self.drive_control.request_drive_field(
-            self.sammi_curve(self.oi.drive_forward()) * self.top_speed,
-            self.sammi_curve(self.oi.drive_strafe()) * self.top_speed,
-            self.sammi_curve(self.oi.drive_rotation()) * self.top_omega,
-        )
+            self.drive_control.request_drive_field(
+                self.sammi_curve(self.oi.drive_forward()) * self.top_speed * mult,
+                self.sammi_curve(self.oi.drive_strafe()) * self.top_speed * mult,
+                self.sammi_curve(self.oi.drive_rotation()) * self.top_omega * mult,
+            )
 
         """
         SHOOTER
         """
-        if self.oi.hard_shoot():
-            self.shooter.set_velocity(47.5)
+        with self.consumeExceptions():
+            if self.oi.hard_shoot():
+                self.shooter_controller.request_shot(47.5)
+            elif self.oi.auto_shoot():
+                pass
+            elif self.oi.unjam():
+                self.shooter.set_voltage(-8.0)
+                self.kicker.set_voltage(-8.0)
+
+        """
+        INTAKE
+        """
+        with self.consumeExceptions():
+            if self.oi.intake():
+                self.intake.set_spin_throttle(0.8)
+            elif self.oi.outtake():
+                self.intake.set_spin_throttle(-0.8)
+
+            if self.oi.intake_up():
+                self.intake.set_arm_voltage(12.0)
+            elif self.oi.intake_down():
+                self.intake.set_arm_voltage(-6.0)

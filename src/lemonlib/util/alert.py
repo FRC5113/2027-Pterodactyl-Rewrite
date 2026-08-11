@@ -1,8 +1,7 @@
 from enum import Enum
 from logging import Logger
-from typing import List
 
-from wpilib import DriverStation, SmartDashboard, Timer, DriverStationBackend
+from wpilib import DriverStationBackend, SmartDashboard, Timer
 from wpiutil import Sendable, SendableBuilder
 
 from .elastic import Notification, send_notification
@@ -117,7 +116,7 @@ class AlertManager(Sendable):
     Manages a collection of alerts and integrates with the SmartDashboard.
     """
 
-    alerts: List[Alert] = []
+    alerts: list[Alert] = []
     logger: Logger = None
 
     def __init__(self, logger, enabled: bool = True):
@@ -148,7 +147,7 @@ class AlertManager(Sendable):
         )
 
     @staticmethod
-    def get_strings(type: AlertType) -> List[str]:
+    def get_strings(type: AlertType) -> list[str]:
         """
         Retrieve active alerts of a specified type as strings.
 

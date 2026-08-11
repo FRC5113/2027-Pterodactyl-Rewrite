@@ -1,7 +1,7 @@
 from wpilib import Preferences, Timer
 
 
-class SmartPreference(object):
+class SmartPreference:
     """Wrapper for wpilib Preferences that improves it in a few ways:
     1. Previous values from NetworkTables are remembered if connection
     is lost instead of defaulting to the values set in code

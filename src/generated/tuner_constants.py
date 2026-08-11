@@ -1,6 +1,5 @@
-from wpimath.units import inchesToMeters
-
 from phoenix6 import CANBus, configs, signals, swerve, units
+from wpimath.units import inchesToMeters
 
 
 class TunerConstants:
