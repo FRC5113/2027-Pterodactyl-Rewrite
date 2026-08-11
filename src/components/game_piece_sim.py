@@ -2,10 +2,10 @@ from wpilib import RobotBase, RobotController
 from wpimath import Translation3d, units
 from wpimath.units import meters, meters_per_second, radians, radians_per_second
 
+from components.fuel_sim.fuel_sim import FuelSim
 from components.intake import Intake
 from components.shooter import Shooter
 from components.swerve_drive import SwerveDrive
-from fuel_sim.fuel_sim import FuelSim
 
 
 class GamePieceSim:
@@ -112,4 +112,5 @@ class GamePieceSim:
         """
 
         if RobotBase.isSimulation():
-            self._fuel_sim.update_sim()
+            # self._fuel_sim.update_sim()
+            pass

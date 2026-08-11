@@ -1,8 +1,8 @@
-from magicbotmod import StateMachine, state, will_reset_to
 from phoenix6 import swerve, units
 from wpimath import Rotation2d
 
 from components.swerve_drive import SwerveDrive
+from magicbotmod import StateMachine, state, will_reset_to
 
 
 class DriveControl(StateMachine):
@@ -34,6 +34,7 @@ class DriveControl(StateMachine):
         self.vel_y = velocity_y
         self.omega = omega
         self.field_relative = True
+        self.engage()
 
     def request_drive_robot(
         self,
@@ -45,6 +46,7 @@ class DriveControl(StateMachine):
         self.vel_y = velocity_y
         self.omega = omega
         self.field_relative = False
+        self.engage()
 
     def request_drive_point(
         self,
@@ -57,14 +59,17 @@ class DriveControl(StateMachine):
         self.requested_angle = angle
         self.field_relative = True
         self.point_req = True
+        self.engage()
 
     def request_angle_blue_perspective(self, angle: Rotation2d):
         self.requested_angle = angle
         self.point_blue_perspective = True
         self.point_req = True
+        self.engage()
 
     def request_x_brake(self):
         self.x_brake = True
+        self.engage()
 
     @state(first=True)
     def idle(self):
@@ -79,60 +84,38 @@ class DriveControl(StateMachine):
 
     @state
     def driving_field_centric(self):
-        if self.x_brake:
-            self.next_state("braking")
-        elif self.point_req:
-            self.next_state("driving_point_field_centric")
-        elif not self.field_relative:
-            self.next_state("idle")
-        else:
-            self.drivetrain.apply_control(
-                self.field_control.with_velocity_x(self.vel_x)
-                .with_velocity_y(self.vel_y)
-                .with_rotational_rate(self.omega)
-            )
+        self.drivetrain.apply_control(
+            self.field_control.with_velocity_x(self.vel_x)
+            .with_velocity_y(self.vel_y)
+            .with_rotational_rate(self.omega)
+        )
 
     @state
     def driving_robot_centric(self):
-        if self.x_brake:
-            self.next_state("braking")
-        elif self.point_req:
-            self.next_state("driving_point_field_centric")
-        elif self.field_relative:
-            self.next_state("idle")
-        else:
-            self.drivetrain.apply_control(
-                self.robot_control.with_velocity_x(self.vel_x)
-                .with_velocity_y(self.vel_y)
-                .with_rotational_rate(self.omega)
-            )
+        self.drivetrain.apply_control(
+            self.robot_control.with_velocity_x(self.vel_x)
+            .with_velocity_y(self.vel_y)
+            .with_rotational_rate(self.omega)
+        )
 
     @state
     def driving_point_field_centric(self):
-        if self.x_brake:
-            self.next_state("braking")
-        elif not self.point_req:
-            self.next_state("idle")
+        if self.point_blue_perspective:
+            self.drivetrain.apply_control(
+                self.point_control.with_velocity_x(self.vel_x)
+                .with_velocity_y(self.vel_y)
+                .with_target_direction(self.requested_angle)
+                .with_forward_perspective(
+                    swerve.requests.ForwardPerspectiveValue.BLUE_ALLIANCE
+                )
+            )
         else:
-            if self.point_blue_perspective:
-                self.drivetrain.apply_control(
-                    self.point_control.with_velocity_x(self.vel_x)
-                    .with_velocity_y(self.vel_y)
-                    .with_target_direction(self.requested_angle)
-                    .with_forward_perspective(
-                        swerve.requests.ForwardPerspectiveValue.BLUE_ALLIANCE
-                    )
-                )
-            else:
-                self.drivetrain.apply_control(
-                    self.point_control.with_velocity_x(self.vel_x)
-                    .with_velocity_y(self.vel_y)
-                    .with_target_direction(self.requested_angle)
-                )
+            self.drivetrain.apply_control(
+                self.point_control.with_velocity_x(self.vel_x)
+                .with_velocity_y(self.vel_y)
+                .with_target_direction(self.requested_angle)
+            )
 
     @state
     def braking(self):
-        if not self.x_brake:
-            self.next_state("idle")
-        else:
-            self.drivetrain.apply_control(self.brake_control)
+        self.drivetrain.apply_control(self.brake_control)

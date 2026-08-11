@@ -15,7 +15,7 @@ from wpimath import (
     Translation3d,
 )
 
-import fuel_sim.constants as const
+import components.fuel_sim.constants as const
 
 
 class FuelSim:

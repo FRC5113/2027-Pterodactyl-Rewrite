@@ -1,5 +1,4 @@
 import phoenix6
-from magicbotmod import feedback, will_reset_to
 from phoenix6 import (
     BaseStatusSignal,
     configs,
@@ -13,12 +12,10 @@ from wpimath import units
 
 from lemonlib.ctre import tryUntilOk
 from lemonlib.smart import SmartProfile
+from magicbotmod import feedback, will_reset_to
 
 
 class Shooter:
-    """
-    Shooter using the Phoenix 6 API.
-    """
 
     right_motor: TalonFX
     left_motor: TalonFX
@@ -101,7 +98,7 @@ class Shooter:
     """
 
     @feedback
-    def get_leader_motor_velocity(self) -> float:
+    def get_velocity(self) -> float:
         """
         :returns: The velocity of the leader_motor motor
         :rtype: float
@@ -109,7 +106,15 @@ class Shooter:
         return self.leader_motor_velocity.value
 
     @feedback
-    def get_leader_motor_torque_current(self) -> float:
+    def get_requested_velocity(self) -> float:
+        """
+        :returns: The requested velocity of the leader_motor motor
+        :rtype: float
+        """
+        return self.control.velocity
+
+    @feedback
+    def get_torque_current(self) -> float:
         """
         :returns: The torque_current of the leader_motor motor
         :rtype: float

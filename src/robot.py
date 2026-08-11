@@ -9,7 +9,10 @@ from wpimath import units
 import oi
 from components.drive_control import DriveControl
 from components.game_piece_sim import GamePieceSim
+from components.indexer import Indexer
 from components.intake import Intake
+from components.kicker import Kicker
+from components.leds import LEDStrip
 from components.shooter import Shooter
 from components.swerve_drive import SwerveDrive
 from generated.tuner_constants import TunerConstants
@@ -27,12 +30,13 @@ class MyRobot(LemonRobot):
     # TODO: Score controller: highest level component that uses shooter controller to shoot and swerve to aim and only shoots when it should
     # TODO: Shooter controller: uses shooter component to shoot and indexer
     drive_control: DriveControl
-    shooter: Shooter
-    # TODO: Indexer component
 
     drivetrain: SwerveDrive
     intake: Intake
-    # TODO: LED component
+    shooter: Shooter
+    indexer: Indexer
+    kicker: Kicker
+    leds: LEDStrip
 
     # Greatest speed that chassis should move (not greatest possible speed)
     top_speed = SmartPreference(4.7)
@@ -185,7 +189,7 @@ class MyRobot(LemonRobot):
         self._sim_notifier = Notifier(_sim_periodic)
         self._sim_notifier.startPeriodic(self._SIM_LOOP_PERIOD)
 
-        self.game_piece_sim.spawn_fuel_line()
+        # self.game_piece_sim.spawn_fuel_line()
 
     """
     PERIODIC
