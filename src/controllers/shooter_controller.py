@@ -13,6 +13,7 @@ class ShooterController(StateMachine):
     shooter_velocity = will_reset_to(0.0)
 
     requested_shoot = will_reset_to(False)
+    only_spin_up = will_reset_to(False)
 
     shooter_tolerance = SmartPreference(3.0)  # In Rotations per second
 
@@ -23,6 +24,15 @@ class ShooterController(StateMachine):
         self.requested_shoot = True
         self.shooter_velocity = velocity
         self.engage()
+
+    def request_only_spin_up(self):
+        self.only_spin_up = True
+
+    def at_speed(self) -> bool:
+        return (
+            abs(self.shooter.get_velocity() - self.shooter_velocity)
+            < self.shooter_tolerance
+        )
 
     @state(first=True)
     def idle(self):
@@ -35,7 +45,7 @@ class ShooterController(StateMachine):
             abs(self.shooter.get_velocity() - self.shooter.get_requested_velocity())
             < self.shooter_tolerance
         )
-        if in_tolerance:
+        if in_tolerance and (not self.only_spin_up):
             self.next_state("shooting")
 
     @state

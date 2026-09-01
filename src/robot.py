@@ -12,8 +12,10 @@ from components.kicker import Kicker
 from components.leds import LEDStrip
 from components.shooter import Shooter
 from components.swerve_drive import SwerveDrive
+from controllers.ballistics import Ballistics
 from controllers.drive_control import DriveControl
 from controllers.game_piece_sim import GamePieceSim
+from controllers.score_controller import ScoreController
 from controllers.shooter_controller import ShooterController
 from generated.tuner_constants import TunerConstants
 from lemonlib import LemonRobot
@@ -26,7 +28,8 @@ from lemonlib.util import (
 
 
 class MyRobot(LemonRobot):
-    # TODO: Score controller: highest level component that uses shooter controller to shoot and swerve to aim and only shoots when it should
+    score_controller: ScoreController
+    ballistics: Ballistics
     shooter_controller: ShooterController
     drive_control: DriveControl
 
@@ -234,7 +237,7 @@ class MyRobot(LemonRobot):
             if self.oi.hard_shoot():
                 self.shooter_controller.request_shot(47.5)
             elif self.oi.auto_shoot():
-                pass
+                self.score_controller.request_score()
             elif self.oi.unjam():
                 self.shooter.set_voltage(-8.0)
                 self.kicker.set_voltage(-8.0)

@@ -24,6 +24,10 @@ class DriveControl(StateMachine):
         self.robot_control = swerve.requests.RobotCentric()
         self.point_control = swerve.requests.FieldCentricFacingAngle()
 
+    def _try_engage(self):
+        if not (self.vel_x == 0.0 and self.vel_y == 0.0 and self.omega == 0.0):
+            self.engage()
+
     def request_drive_field(
         self,
         velocity_x: units.meters_per_second,
@@ -34,7 +38,7 @@ class DriveControl(StateMachine):
         self.vel_y = velocity_y
         self.omega = omega
         self.field_relative = True
-        self.engage()
+        self._try_engage()
 
     def request_drive_robot(
         self,
@@ -46,7 +50,7 @@ class DriveControl(StateMachine):
         self.vel_y = velocity_y
         self.omega = omega
         self.field_relative = False
-        self.engage()
+        self._try_engage()
 
     def request_drive_point(
         self,
@@ -59,17 +63,18 @@ class DriveControl(StateMachine):
         self.requested_angle = angle
         self.field_relative = True
         self.point_req = True
-        self.engage()
+        self._try_engage()
 
     def request_angle_blue_perspective(self, angle: Rotation2d):
         self.requested_angle = angle
         self.point_blue_perspective = True
         self.point_req = True
+        print(angle)
         self.engage()
 
     def request_x_brake(self):
         self.x_brake = True
-        self.engage()
+        self._try_engage()
 
     @state(first=True)
     def idle(self):
@@ -108,12 +113,14 @@ class DriveControl(StateMachine):
                 .with_forward_perspective(
                     swerve.requests.ForwardPerspectiveValue.BLUE_ALLIANCE
                 )
+                .with_heading_pid(3.0, 0.0, 0.0)
             )
         else:
             self.drivetrain.apply_control(
                 self.point_control.with_velocity_x(self.vel_x)
                 .with_velocity_y(self.vel_y)
                 .with_target_direction(self.requested_angle)
+                .with_heading_pid(3.0, 0.0, 0.0)
             )
 
     @state
