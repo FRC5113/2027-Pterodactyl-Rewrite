@@ -1,4 +1,4 @@
-from wpilib import Gamepad
+from wpilib import Gamepad, SmartDashboard
 
 
 class OI_Base:
@@ -138,3 +138,47 @@ class SingleOI(OI_Base):
 
     def unjam(self) -> bool:
         return self.controller.getNorthFaceButton()
+
+
+class Twitch_OI(OI_Base):
+    def drive_forward(self) -> float:
+        return SmartDashboard.getNumber("LeftY")
+
+    def drive_strafe(self) -> float:
+        return SmartDashboard.getNumber("LeftX")
+
+    def drive_rotation(self) -> float:
+        return SmartDashboard.getNumber("RightX")
+
+    def drive_limit_speed75(self) -> bool:
+        return False
+
+    def drive_limit_speed50(self) -> bool:
+        return False
+
+    def reset_gyro(self) -> bool:
+        return False
+
+    def intake(self) -> bool:
+        return SmartDashboard.getBoolean("intake")
+
+    def outtake(self) -> bool:
+        return False
+
+    def intake_up(self) -> bool:
+        return False
+
+    def intake_down(self) -> bool:
+        return False
+
+    def hard_shoot(self) -> bool:
+        return False
+
+    def auto_shoot(self) -> bool:
+        return SmartDashboard.getBoolean("shoot")
+
+    def funny_shoot(self) -> bool:
+        return False
+
+    def unjam(self) -> bool:
+        return False

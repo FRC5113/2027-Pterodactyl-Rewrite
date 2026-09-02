@@ -69,7 +69,6 @@ class DriveControl(StateMachine):
         self.requested_angle = angle
         self.point_blue_perspective = True
         self.point_req = True
-        print(angle)
         self.engage()
 
     def request_x_brake(self):

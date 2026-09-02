@@ -176,7 +176,7 @@ class MyRobot(LemonRobot):
     def teleopInit(self) -> None:
         self.primary = Gamepad(0)
         self.secondary = Gamepad(1)
-        self.oi = oi.SingleOI(self.primary)
+        self.oi = oi.Twitch_OI()
 
     def _simulationInit(self):
         """
