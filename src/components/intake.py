@@ -11,7 +11,7 @@ from modified_libs.magicbot import feedback, will_reset_to
 
 class Arm_Angle(float, Enum):
     STOWED = 0.0
-    DOWN = 270.0
+    DOWN = 90.0
 
 
 class Intake:
@@ -19,7 +19,7 @@ class Intake:
     spin_motor: TalonFX
     arm_motor: TalonFX
 
-    endcoder: DutyCycleEncoder
+    encoder: DutyCycleEncoder
 
     profile: SmartProfile
 
@@ -67,6 +67,7 @@ class Intake:
 
     def set_wheel_voltage(self, voltage: units.volt) -> None:
         self.spin_control = self.volt_control.with_output(voltage)
+        self.target_angle = Arm_Angle.DOWN.value
 
     def set_arm_throttle(self, throttle: float):
         self.arm_control = self.throttle_control.with_output(throttle)
@@ -74,6 +75,7 @@ class Intake:
 
     def set_spin_throttle(self, throttle: float):
         self.spin_control = self.throttle_control.with_output(throttle)
+        self.target_angle = Arm_Angle.DOWN.value
 
     def set_arm_angle(self, angle):
         self.target_angle = angle
@@ -92,14 +94,18 @@ class Intake:
         """Return the angle of the hinge normalized to [-180,180].
         An angle of 0 refers to the intake in the up/stowed position.
         """
-        angle = self.endcoder.get() * 360
+        angle = self.encoder.get() * 360
         if angle > 180:
             angle -= 360
         return angle
 
     @feedback
     def get_arm_position(self):
-        return self.endcoder.get()
+        return self.encoder.get()
+
+    @feedback
+    def get_requested_angle(self):
+        return self.target_angle
 
     def on_enable(self):
         self.arm_controller = self.profile.create_arm_controller("Intake")

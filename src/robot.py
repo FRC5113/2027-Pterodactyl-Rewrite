@@ -3,7 +3,7 @@ import math
 import phoenix6
 from phoenix6 import CANBus, SignalLogger, units
 from phoenix6.hardware import TalonFX, TalonFXS
-from wpilib import Gamepad, Notifier, RobotController, DutyCycleEncoder
+from wpilib import DutyCycleEncoder, Gamepad, Notifier, RobotController
 
 import oi
 from components.indexer import Indexer
@@ -112,6 +112,8 @@ class MyRobot(LemonRobot):
                 "kS": 0.0,
                 "kV": 0.0,
                 "kG": 0.0,
+                "kMaxV": 150.0,
+                "kMaxA": 500.0,
             },
             not self.low_bandwidth,
         )
@@ -190,7 +192,9 @@ class MyRobot(LemonRobot):
     def teleopInit(self) -> None:
         self.primary = Gamepad(0)
         self.secondary = Gamepad(1)
-        self.oi = oi.Twitch_OI()
+        # self.oi = oi.Twitch_OI()
+        # self.oi = oi.DoubleOI(self.primary, self.secondary)
+        self.oi = oi.SingleOI(self.primary)
 
     def _simulationInit(self):
         """

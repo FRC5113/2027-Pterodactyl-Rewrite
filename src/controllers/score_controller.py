@@ -2,6 +2,7 @@ import math
 
 from wpimath import Rotation2d
 
+from components.intake import Arm_Angle, Intake
 from components.shooter import Shooter
 from components.swerve_drive import SwerveDrive
 from controllers.ballistics import Ballistics
@@ -11,14 +12,13 @@ from modified_libs.magicbot import StateMachine, state, will_reset_to
 
 
 class ScoreController(StateMachine):
-    # i would suggest looking at this for shoot anywhere https://github.com/thedropbears/pyrebuilt/blob/main/components/ballistics.py
-
     shooter_controller: ShooterController
     drive_control: DriveControl
     ballistics: Ballistics
 
     shooter: Shooter
     drivetrain: SwerveDrive
+    intake: Intake
 
     target_angle = will_reset_to(0.0)
     target_rps = will_reset_to(0.0)
@@ -54,10 +54,15 @@ class ScoreController(StateMachine):
             self.next_state("scoring")
 
     @state
-    def scoring(self):
+    def scoring(self, state_tm):
         """
         sends velocity to shooter controller
         """
         self._update_values()
         self.drive_control.request_angle_blue_perspective(Rotation2d(self.target_angle))
         self.shooter_controller.request_shot(self.target_rps)
+
+        if (
+            state_tm >= self.push_wait_time
+        ):  # After set time use the intake to push balls in
+            self.intake.set_arm_angle(Arm_Angle.STOWED.value)
