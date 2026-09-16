@@ -3,7 +3,7 @@ import math
 import phoenix6
 from phoenix6 import CANBus, SignalLogger, units
 from phoenix6.hardware import TalonFX, TalonFXS
-from wpilib import Gamepad, Notifier, RobotController
+from wpilib import Gamepad, Notifier, RobotController, DutyCycleEncoder
 
 import oi
 from components.indexer import Indexer
@@ -96,11 +96,25 @@ class MyRobot(LemonRobot):
         self.intake_canbus = CANBus.systemcore(1)
 
         self.intake_spin_motor = TalonFX(51, self.intake_canbus)
-        self.intake_left_motor = TalonFXS(52, self.intake_canbus)
-        self.intake_right_motor = TalonFXS(53, self.intake_canbus)
+        self.intake_arm_motor = TalonFX(52, self.intake_canbus)
+
+        self.intake_encoder = DutyCycleEncoder(1)
 
         self.intake_spin_amps: units.ampere = 80.0
-        self.intake_arm_amps: units.ampere = 24.0
+        self.intake_arm_amps: units.ampere = 40.0
+
+        self.intake_profile = SmartProfile(
+            "Intake",
+            {
+                "kP": 5.0,
+                "kI": 0.0,
+                "kD": 0.0,
+                "kS": 0.0,
+                "kV": 0.0,
+                "kG": 0.0,
+            },
+            not self.low_bandwidth,
+        )
 
         """
         SHOOTER

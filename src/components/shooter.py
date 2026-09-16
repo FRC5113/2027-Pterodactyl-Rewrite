@@ -151,7 +151,7 @@ class Shooter:
         self.control = self.coast_request
 
     def set_voltage(self, volts: units.volt):
-        self.control = self.voltage_request(volts)
+        self.control = self.voltage_request.with_output(volts)
 
     def execute(self) -> None:
         """
