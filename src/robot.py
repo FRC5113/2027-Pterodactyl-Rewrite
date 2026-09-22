@@ -41,8 +41,8 @@ class MyRobot(LemonRobot):
     leds: LEDStrip
 
     # Greatest speed that chassis should move (not greatest possible speed)
-    top_speed = SmartPreference(4.7)
-    top_omega = SmartPreference(6.0)
+    top_speed = 1.0 #SmartPreference(4.7)
+    top_omega = 3.5 #SmartPreference(6.0)
 
     _SIM_LOOP_PERIOD: phoenix6.units.second = 0.004  # 4 ms temp
 
@@ -270,6 +270,6 @@ class MyRobot(LemonRobot):
                 self.intake.set_spin_throttle(-0.8)
 
             if self.oi.intake_up():
-                self.intake.set_arm_voltage(12.0)
+                self.intake.set_arm_voltage(-2.0)
             elif self.oi.intake_down():
-                self.intake.set_arm_voltage(-6.0)
+                self.intake.set_arm_voltage(2.0)

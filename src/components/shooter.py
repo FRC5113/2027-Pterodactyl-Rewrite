@@ -52,7 +52,7 @@ class Shooter:
         self.leader_motor_configs = (
             self.talon_fx_initial_configs.with_motor_output(
                 self.talon_fx_initial_configs.motor_output.with_inverted(
-                    signals.InvertedValue.COUNTER_CLOCKWISE_POSITIVE
+                    signals.InvertedValue.CLOCKWISE_POSITIVE
                 )
             )
             .with_feedback(
@@ -66,7 +66,7 @@ class Shooter:
         # Configs for follower_motor.
         self.follower_motor_configs = self.talon_fx_initial_configs.with_motor_output(
             self.talon_fx_initial_configs.motor_output.with_inverted(
-                signals.InvertedValue.COUNTER_CLOCKWISE_POSITIVE
+                signals.InvertedValue.CLOCKWISE_POSITIVE
             )
         )
 

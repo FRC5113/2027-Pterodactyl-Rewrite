@@ -113,7 +113,7 @@ class SingleOI(OI_Base):
         return self.controller.getLeftX()
 
     def drive_rotation(self) -> float:
-        return self.controller.getRightX()
+        return -self.controller.getRightX()
 
     def reset_gyro(self) -> bool:
         return self.controller.getStartButton()

@@ -11,7 +11,7 @@ from modified_libs.magicbot import feedback, will_reset_to
 
 class Arm_Angle(float, Enum):
     STOWED = 0.0
-    DOWN = 90.0
+    DOWN = 93.0
 
 
 class Intake:
@@ -40,6 +40,8 @@ class Intake:
         self.volt_control = controls.VoltageOut(0.0)
         self.throttle_control = controls.DutyCycleOut(0.0)
 
+        # self.encoder.setInverted(True)
+
     def _config_arm_motors(self):
         self.arm_motor_config = configs.TalonFXConfiguration()
 
@@ -53,6 +55,7 @@ class Intake:
         # Configure motors
         spin_config = configs.TalonFXConfiguration()
         spin_config.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
+        spin_config.motor_output.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE
         spin_config.current_limits.stator_current_limit = self.spin_amps
         spin_config.current_limits.stator_current_limit_enable = True
         tryUntilOk(5, lambda: self.spin_motor.configurator.apply(spin_config))
@@ -63,6 +66,7 @@ class Intake:
 
     def set_arm_voltage(self, voltage: units.volt) -> None:
         self.arm_control = self.volt_control.with_output(voltage)
+        self.arm_voltage= voltage
         self.arm_manual = True
 
     def set_wheel_voltage(self, voltage: units.volt) -> None:
@@ -94,14 +98,14 @@ class Intake:
         """Return the angle of the hinge normalized to [-180,180].
         An angle of 0 refers to the intake in the up/stowed position.
         """
-        angle = self.encoder.get() * 360
+        angle = self.get_arm_position() * 360
         if angle > 180:
             angle -= 360
         return angle
 
     @feedback
     def get_arm_position(self):
-        return self.encoder.get()
+        return (self.encoder.get() - 0.9434523809523809) % 1
 
     @feedback
     def get_requested_angle(self):
@@ -111,15 +115,15 @@ class Intake:
         self.arm_controller = self.profile.create_arm_controller("Intake")
 
     def execute(self) -> None:
-        if not self.arm_manual:
-            self.arm_voltage = self.arm_controller.calculate(
-                self.get_arm_angle(), self.target_angle
-            )
+        # if not self.arm_manual:
+        #     self.arm_voltage = self.arm_controller.calculate(
+        #         self.get_arm_angle(), self.target_angle
+        #     )
 
-        if (self.get_arm_angle() <= Arm_Angle.STOWED and self.arm_voltage > 0) or (
-            self.get_arm_angle() >= Arm_Angle.DOWN and self.arm_voltage < 0
-        ):
-            self.arm_motor.set_control(self.volt_control.with_output(self.arm_voltage))
+        # if (self.get_arm_angle() <= Arm_Angle.STOWED and self.arm_voltage > 0) or (
+        #     self.get_arm_angle() >= Arm_Angle.DOWN and self.arm_voltage < 0
+        # ):
+        self.arm_motor.set_control(controls.VoltageOut(self.arm_voltage))
 
         self.spin_motor.set_control(self.spin_control)
 

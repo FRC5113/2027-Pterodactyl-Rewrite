@@ -2,7 +2,7 @@ from components.indexer import Indexer
 from components.kicker import Kicker
 from components.shooter import Shooter
 from lemonlib.smart import SmartPreference
-from modified_libs.magicbot import StateMachine, state, will_reset_to
+from modified_libs.magicbot import StateMachine, state, will_reset_to,feedback
 
 
 class ShooterController(StateMachine):
@@ -17,7 +17,7 @@ class ShooterController(StateMachine):
 
     shooter_tolerance = SmartPreference(3.0)  # In Rotations per second
 
-    indexer_throttle = 0.8
+    indexer_throttle = -0.8
     kicker_throttle = 0.8
 
     def request_shot(self, velocity):
@@ -28,6 +28,7 @@ class ShooterController(StateMachine):
     def request_only_spin_up(self):
         self.only_spin_up = True
 
+    @feedback
     def at_speed(self) -> bool:
         return (
             abs(self.shooter.get_velocity() - self.shooter_velocity)
@@ -41,12 +42,10 @@ class ShooterController(StateMachine):
 
     @state
     def spin_up(self):
-        in_tolerance = (
-            abs(self.shooter.get_velocity() - self.shooter.get_requested_velocity())
-            < self.shooter_tolerance
-        )
-        if in_tolerance and (not self.only_spin_up):
+        if self.at_speed():# and (not self.only_spin_up):
             self.next_state("shooting")
+
+        self.shooter.set_velocity(self.shooter_velocity)
 
     @state
     def shooting(self):
