@@ -96,7 +96,8 @@ class MyRobot(LemonRobot):
         self.intake_canbus = CANBus.systemcore(1)
 
         self.intake_spin_motor = TalonFX(51, self.intake_canbus)
-        self.intake_arm_motor = TalonFX(52, self.intake_canbus)
+        self.intake_left_motor = TalonFXS(52, self.intake_canbus)
+        self.intake_right_motor = TalonFXS(53, self.intake_canbus)
 
         self.intake_encoder = DutyCycleEncoder(1)
 
@@ -270,6 +271,6 @@ class MyRobot(LemonRobot):
                 self.intake.set_spin_throttle(-0.8)
 
             if self.oi.intake_up():
-                self.intake.set_arm_voltage(-2.0)
+                self.intake.set_arm_voltage(-10.0)
             elif self.oi.intake_down():
-                self.intake.set_arm_voltage(2.0)
+                self.intake.set_arm_voltage(10.0)

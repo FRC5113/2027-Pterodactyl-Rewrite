@@ -1,7 +1,7 @@
 from enum import Enum
 
 from phoenix6 import BaseStatusSignal, configs, controls, signals, units
-from phoenix6.hardware import TalonFX
+from phoenix6.hardware import TalonFX,TalonFXS
 from wpilib import DutyCycleEncoder
 
 from lemonlib.ctre import tryUntilOk
@@ -17,7 +17,8 @@ class Arm_Angle(float, Enum):
 class Intake:
 
     spin_motor: TalonFX
-    arm_motor: TalonFX
+    right_motor: TalonFXS
+    left_motor: TalonFXS
 
     encoder: DutyCycleEncoder
 
@@ -42,20 +43,34 @@ class Intake:
 
         # self.encoder.setInverted(True)
 
+        self.arm_follower_control = controls.Follower(
+            self.right_motor.device_id, signals.MotorAlignmentValue.ALIGNED
+        )
+
+
     def _config_arm_motors(self):
-        self.arm_motor_config = configs.TalonFXConfiguration()
+        self.arm_motor_config = configs.TalonFXSConfiguration()
 
         self.arm_motor_config.current_limits.stator_current_limit = self.arm_amps
         self.arm_motor_config.current_limits.stator_current_limit_enable = True
         self.arm_motor_config.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
 
-        tryUntilOk(5, lambda: self.arm_motor.configurator.apply(self.arm_motor_config))
+        self.arm_motor_config.commutation.motor_arrangement = (
+            signals.MotorArrangementValue.BRUSHED_DC
+        )
+
+        tryUntilOk(5, lambda: self.left_motor.configurator.apply(self.arm_motor_config))
+        tryUntilOk(
+            5, lambda: self.right_motor.configurator.apply(self.arm_motor_config)
+        )
+
+
 
     def _config_spin_motor(self):
         # Configure motors
         spin_config = configs.TalonFXConfiguration()
         spin_config.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
-        spin_config.motor_output.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE
+        spin_config.motor_output.inverted = signals.InvertedValue.COUNTER_CLOCKWISE_POSITIVE
         spin_config.current_limits.stator_current_limit = self.spin_amps
         spin_config.current_limits.stator_current_limit_enable = True
         tryUntilOk(5, lambda: self.spin_motor.configurator.apply(spin_config))
@@ -111,6 +126,10 @@ class Intake:
     def get_requested_angle(self):
         return self.target_angle
 
+    @feedback
+    def get_arm_voltage(self):
+        return self.arm_voltage
+
     def on_enable(self):
         self.arm_controller = self.profile.create_arm_controller("Intake")
 
@@ -119,11 +138,14 @@ class Intake:
         #     self.arm_voltage = self.arm_controller.calculate(
         #         self.get_arm_angle(), self.target_angle
         #     )
-
-        # if (self.get_arm_angle() <= Arm_Angle.STOWED and self.arm_voltage > 0) or (
-        #     self.get_arm_angle() >= Arm_Angle.DOWN and self.arm_voltage < 0
-        # ):
-        self.arm_motor.set_control(controls.VoltageOut(self.arm_voltage))
+        
+        if (self.get_arm_angle() <= Arm_Angle.STOWED and self.arm_voltage < 0.0) or (
+            self.get_arm_angle() >= Arm_Angle.DOWN and self.arm_voltage > 0.0
+        ):
+            self.arm_voltage = 0.0
+        
+        self.right_motor.set_control(self.volt_control.with_output(self.arm_voltage))
+        self.left_motor.set_control(self.volt_control.with_output(self.arm_voltage))
 
         self.spin_motor.set_control(self.spin_control)
 
