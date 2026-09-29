@@ -96,7 +96,9 @@ class SmartPreference(Generic[T]):
             Preferences.setString(self._key, self._value)
         elif self._type is bool:
             Preferences.setBoolean(self._key, self._value)
-        self._last_nt_read = RobotController.getMonotonicTime()  # Cache is fresh after set
+        self._last_nt_read = (
+            RobotController.getMonotonicTime()
+        )  # Cache is fresh after set
 
     @staticmethod
     def has_changed() -> bool:

@@ -2,7 +2,7 @@ from enum import Enum
 
 from phoenix6 import BaseStatusSignal, configs, controls, signals, units
 from phoenix6.hardware import TalonFX, TalonFXS
-from wpilib import DutyCycleEncoder
+from wpilib import DutyCycleEncoder, SmartDashboard
 
 from lemonlib.ctre import tryUntilOk
 from lemonlib.smart import SmartProfile, SmartPreference
@@ -32,10 +32,9 @@ class Intake:
     target_angle = will_reset_to(Intake_Angle.DOWN)
     spin_control = will_reset_to(controls.StaticBrake())
     arm_voltage = will_reset_to(0.0)
-    arm_manual = False
+    arm_manual = will_reset_to(False)
 
-    up_kP = SmartPreference(12.0)
-    down_kP = SmartPreference(4.0)
+    ENCODER_OFFSET = 0.9434523809523809
 
     def setup(self) -> None:
         self._config_arm_motors()
@@ -79,21 +78,6 @@ class Intake:
         spin_config.current_limits.stator_current_limit_enable = True
         tryUntilOk(5, lambda: self.spin_motor.configurator.apply(spin_config))
 
-    def _p_controller(self, setpoint: float, position: float) -> float:
-        """
-        Pure p controller that has diffrent gains for going up and down cause gravity
-        """
-
-        error = clamp((setpoint - position) / 90, -1.0, 1.0)
-
-        if abs(error) < self.tolerance:
-            return 0.0
-
-        # 0.0 is up and 90 is down so if we want to go down error will be positive
-        if error < 0.0:
-            return self.down_kP * error
-        return self.up_kP * error
-
     """
     CONTROL METHODS
     """
@@ -128,7 +112,7 @@ class Intake:
         return self.spin_motor_supply_amps.value
 
     @feedback
-    def get_arm_angle(self):
+    def get_arm_angle(self) -> float:
         """Return the angle of the hinge normalized to [-180,180].
         An angle of 0 refers to the intake in the up/stowed position.
         """
@@ -139,7 +123,7 @@ class Intake:
 
     @feedback
     def get_arm_position(self):
-        return (self.encoder.get() - 0.9434523809523809) % 1
+        return (self.encoder.get() - self.ENCODER_OFFSET) % 1
 
     @feedback
     def get_requested_angle(self):
@@ -149,11 +133,16 @@ class Intake:
     def get_arm_voltage(self):
         return self.arm_voltage
 
+    def on_enable(self):
+        self.arm_controller = self.profile.create_pid_controller("Intake Arm")
+
     def execute(self) -> None:
         arm_angle = self.get_arm_angle()
 
         if not self.arm_manual:
-            self.arm_voltage = -self._p_controller(arm_angle, self.target_angle)
+            self.arm_voltage = self.arm_controller.calculate(
+                arm_angle, self.target_angle.value
+            )
 
         if (arm_angle <= Intake_Angle.STOWED.value and self.arm_voltage < 0.0) or (
             arm_angle >= Intake_Angle.DOWN.value and self.arm_voltage > 0.0

@@ -12,6 +12,8 @@ from components.kicker import Kicker
 from components.leds import LEDStrip
 from components.shooter import Shooter
 from components.swerve_drive import SwerveDrive
+from components.simulation.swerve_sim import SwerveSim
+from components.simulation.intake_sim import IntakeSim
 from controllers.ballistics import Ballistics
 from controllers.drive_control import DriveControl
 from controllers.game_piece_sim import GamePieceSim
@@ -110,13 +112,6 @@ class MyRobot(LemonRobot):
                 "kP": 5.0,
                 "kI": 0.0,
                 "kD": 0.0,
-                "kS": 0.0,
-                "kV": 0.0,
-                "kG": 0.0,
-                "kMaxV": 150.0,
-                "kMaxA": 500.0,
-                "up_kP": 12.0,
-                "down_kP": 4.0,
             },
             not self.low_bandwidth,
         )
@@ -186,10 +181,6 @@ class MyRobot(LemonRobot):
                 "Low Bandwidth Mode is active! Tuning is disabled.", AlertType.INFO
             )
 
-        # Temp sim stuff
-        self._sim_notifier: Notifier | None = None
-        self._last_sim_time: phoenix6.units.second = 0.0
-
     """
     MODE INITIALIZATION
     """
@@ -202,31 +193,14 @@ class MyRobot(LemonRobot):
         self.oi = oi.SingleOI(self.primary)
 
     def _simulationInit(self):
-        """
-        This is a temp way to do simulation as physics.py is not implemented in the alpha version of 2027 that it is written in
-        """
-        self.game_piece_sim = (
-            GamePieceSim()
-        )  # Created here as its ment for simulation only and we dont want it to run non sim
-        self.game_piece_sim.setup()
+        self.swerve_sim = SwerveSim(
+            self.drivetrain
+        )  # Has a notifier built in so does not need periodic called
 
-        def _sim_periodic():
-            current_time = phoenix6.utils.get_current_time_seconds()
-            delta_time = current_time - self._last_sim_time
-            self._last_sim_time = current_time
+        self.intake_sim = IntakeSim(self.intake)
 
-            # Use the measured time delta, get battery voltage from WPILib
-            self.drivetrain.drivetrain.update_sim_state(
-                delta_time, RobotController.getBatteryVoltage()
-            )
-            self.game_piece_sim.execute()  # only executes in sim
-
-        # Run simulation at a faster rate so PID gains behave more reasonably
-        self._last_sim_time = phoenix6.utils.get_current_time_seconds()
-        self._sim_notifier = Notifier(_sim_periodic)
-        self._sim_notifier.startPeriodic(self._SIM_LOOP_PERIOD)
-
-        self.game_piece_sim.spawn_fuel_line()
+    def _simulationPeriodic(self) -> None:
+        self.intake_sim.simulation_periodic()
 
     """
     PERIODIC
@@ -279,4 +253,4 @@ class MyRobot(LemonRobot):
                 self.intake.set_arm_angle(Intake_Angle.STOWED)
             elif self.oi.intake_down():
                 # self.intake.set_arm_voltage(10.0)
-                self.intake.set_arm_angle(Intake_Angle.STOWED)
+                self.intake.set_arm_angle(Intake_Angle.DOWN)

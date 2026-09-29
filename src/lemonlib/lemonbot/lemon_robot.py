@@ -67,22 +67,6 @@ class LemonRobot(magicbot.MagicRobot):
     def on_enable(self):
         pass
 
-    def robotPeriodic(self) -> None:
-        """
-        Periodic code for all modes should go here.
-
-        Users must override this method to utilize it
-        but it is not required.
-
-        This function gets called last in each mode.
-        You may use it for any code you need to run
-        during all modes of the robot (e.g NetworkTables updates)
-
-        The default implementation will update
-        SmartDashboard and LiveWindow
-        """
-        super().robotPeriodic()
-
     def _enabled_periodic(self) -> None:
         watchdog = self.watchdog
 
@@ -103,119 +87,7 @@ class LemonRobot(magicbot.MagicRobot):
         super()._do_periodics()
 
         wd = self.watchdog
-        loop_time = wd.getTime()
-
-        if self.watchdog_profile:
-            is_overrun = loop_time > self.control_loop_wait_time
-
-            epochs = wd._epochs
-            prev = wd._startTime
-
-            alpha = float(self.watchdog_ema_alpha)
-            one_minus_alpha = 1.0 - alpha
-
-            ema_all = self._epoch_ema_all
-            ema_overrun = self._epoch_ema_overrun
-            last_overrun = self._last_overrun_epochs
-
-            for key, value in epochs:
-                delta = (value - prev) * 1e-6
-
-                prev_ema = ema_all.get(key)
-                if prev_ema is None:
-                    ema_all[key] = delta
-                else:
-                    ema_all[key] = alpha * delta + one_minus_alpha * prev_ema
-
-                prev = value
-
-            if is_overrun:
-                self._overrun_count += 1
-
-                prev = wd._startTime
-                for key, value in epochs:
-                    delta = (value - prev) * 1e-6
-                    last_overrun[key] = delta
-
-                    prev_ema = ema_overrun.get(key)
-                    if prev_ema is None:
-                        ema_overrun[key] = delta
-                    else:
-                        ema_overrun[key] = alpha * delta + one_minus_alpha * prev_ema
-
-                    prev = value
-
-            now_fpga = Timer.getMonotonicTimestamp()
-            if (
-                now_fpga - self._last_watchdog_profile_time
-                >= self.watchdog_profile_period
-            ):
-                self._last_watchdog_profile_time = now_fpga
-
-                start = wd._startTime
-                now = wd._get_time()
-                total_time = (now - start) * 1e-6
-
-                self._smart_nt.put_number("Watchdog/LoopTime", round(loop_time, 6))
-                self._smart_nt.put_number(
-                    "Watchdog/ControlPeriod", round(self.control_loop_wait_time, 6)
-                )
-                self._smart_nt.put_boolean("Watchdog/Overrun", is_overrun)
-                self._smart_nt.put_number("Watchdog/OverrunCount", self._overrun_count)
-                self._smart_nt.put_number("Watchdog Epochs/Total", round(total_time, 6))
-
-                if last_overrun:
-                    max_last = 0.0
-                    total_last = 0.0
-                    for v in last_overrun.values():
-                        total_last += v
-                        max_last = max(max_last, v)
-
-                    self._smart_nt.put_number(
-                        "Watchdog LastOverrun/Max", round(max_last, 6)
-                    )
-                    self._smart_nt.put_number(
-                        "Watchdog LastOverrun/Total", round(total_last, 6)
-                    )
-
-                    for k, v in last_overrun.items():
-                        self._smart_nt.put_number(
-                            f"Watchdog LastOverrun/{k}", round(v, 6)
-                        )
-
-                if ema_all:
-                    max_all = 0.0
-                    total_all = 0.0
-                    for v in ema_all.values():
-                        total_all += v
-                        max_all = max(max_all, v)
-
-                    self._smart_nt.put_number("Watchdog EMA/Max", round(max_all, 6))
-                    self._smart_nt.put_number("Watchdog EMA/Total", round(total_all, 6))
-
-                    for k, v in ema_all.items():
-                        self._smart_nt.put_number(f"Watchdog EMA/{k}", round(v, 6))
-
-                if ema_overrun:
-                    max_or = 0.0
-                    total_or = 0.0
-                    for v in ema_overrun.values():
-                        total_or += v
-                        max_or = max(max_or, v)
-
-                    self._smart_nt.put_number(
-                        "Watchdog EMAOverrun/Max", round(max_or, 6)
-                    )
-                    self._smart_nt.put_number(
-                        "Watchdog EMAOverrun/Total", round(total_or, 6)
-                    )
-
-                    for k, v in ema_overrun.items():
-                        self._smart_nt.put_number(
-                            f"Watchdog EMAOverrun/{k}", round(v, 6)
-                        )
-
-            wd.addEpoch("watchdog_profile")
+        self.loop_time = wd.getTime()
 
     def get_period(self) -> float:
         """Get the period of the robot loop in seconds."""
