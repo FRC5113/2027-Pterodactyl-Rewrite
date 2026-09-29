@@ -2,7 +2,7 @@ import math
 
 from wpimath import Rotation2d
 
-from components.intake import Arm_Angle, Intake
+from components.intake import Intake_Angle, Intake
 from components.shooter import Shooter
 from components.swerve_drive import SwerveDrive
 from controllers.ballistics import Ballistics
@@ -62,7 +62,7 @@ class ScoreController(StateMachine):
         self.drive_control.request_angle_blue_perspective(Rotation2d(self.target_angle))
         self.shooter_controller.request_shot(self.target_rps)
 
-        if (
-            state_tm >= self.push_wait_time
-        ):  # After set time use the intake to push balls in
-            self.intake.set_arm_angle(Arm_Angle.STOWED.value)
+        # if (
+        #     state_tm >= self.push_wait_time
+        # ):  # After set time use the intake to push balls in
+        #     self.intake.set_arm_angle(Intake_Angle.STOWED.value)

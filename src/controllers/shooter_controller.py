@@ -2,7 +2,7 @@ from components.indexer import Indexer
 from components.kicker import Kicker
 from components.shooter import Shooter
 from lemonlib.smart import SmartPreference
-from modified_libs.magicbot import StateMachine, state, will_reset_to,feedback
+from modified_libs.magicbot import StateMachine, state, will_reset_to, feedback
 
 
 class ShooterController(StateMachine):
@@ -42,7 +42,7 @@ class ShooterController(StateMachine):
 
     @state
     def spin_up(self):
-        if self.at_speed():# and (not self.only_spin_up):
+        if self.at_speed():  # and (not self.only_spin_up):
             self.next_state("shooting")
 
         self.shooter.set_velocity(self.shooter_velocity)

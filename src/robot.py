@@ -7,7 +7,7 @@ from wpilib import DutyCycleEncoder, Gamepad, Notifier, RobotController
 
 import oi
 from components.indexer import Indexer
-from components.intake import Intake
+from components.intake import Intake, Intake_Angle
 from components.kicker import Kicker
 from components.leds import LEDStrip
 from components.shooter import Shooter
@@ -41,8 +41,8 @@ class MyRobot(LemonRobot):
     leds: LEDStrip
 
     # Greatest speed that chassis should move (not greatest possible speed)
-    top_speed = 1.0 #SmartPreference(4.7)
-    top_omega = 3.5 #SmartPreference(6.0)
+    top_speed = SmartPreference(4.7)
+    top_omega = SmartPreference(6.0)
 
     _SIM_LOOP_PERIOD: phoenix6.units.second = 0.004  # 4 ms temp
 
@@ -115,9 +115,13 @@ class MyRobot(LemonRobot):
                 "kG": 0.0,
                 "kMaxV": 150.0,
                 "kMaxA": 500.0,
+                "up_kP": 12.0,
+                "down_kP": 4.0,
             },
             not self.low_bandwidth,
         )
+
+        self.intake_tolerance = 3.0
 
         """
         SHOOTER
@@ -271,6 +275,8 @@ class MyRobot(LemonRobot):
                 self.intake.set_spin_throttle(-0.8)
 
             if self.oi.intake_up():
-                self.intake.set_arm_voltage(-10.0)
+                # self.intake.set_arm_voltage(-10.0)
+                self.intake.set_arm_angle(Intake_Angle.STOWED)
             elif self.oi.intake_down():
-                self.intake.set_arm_voltage(10.0)
+                # self.intake.set_arm_voltage(10.0)
+                self.intake.set_arm_angle(Intake_Angle.STOWED)

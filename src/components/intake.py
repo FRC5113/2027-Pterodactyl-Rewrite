@@ -1,17 +1,18 @@
 from enum import Enum
 
 from phoenix6 import BaseStatusSignal, configs, controls, signals, units
-from phoenix6.hardware import TalonFX,TalonFXS
+from phoenix6.hardware import TalonFX, TalonFXS
 from wpilib import DutyCycleEncoder
 
 from lemonlib.ctre import tryUntilOk
-from lemonlib.smart import SmartProfile
+from lemonlib.smart import SmartProfile, SmartPreference
+from lemonlib.util import clamp
 from modified_libs.magicbot import feedback, will_reset_to
 
 
-class Arm_Angle(float, Enum):
-    STOWED = 0.0
-    DOWN = 93.0
+class Intake_Angle(float, Enum):
+    STOWED = 2.0
+    DOWN = 90.0
 
 
 class Intake:
@@ -26,11 +27,15 @@ class Intake:
 
     spin_amps: units.ampere
     arm_amps: units.ampere
+    tolerance: float
 
-    target_angle = will_reset_to(Arm_Angle.DOWN.value)
+    target_angle = will_reset_to(Intake_Angle.DOWN)
     spin_control = will_reset_to(controls.StaticBrake())
     arm_voltage = will_reset_to(0.0)
     arm_manual = False
+
+    up_kP = SmartPreference(12.0)
+    down_kP = SmartPreference(4.0)
 
     def setup(self) -> None:
         self._config_arm_motors()
@@ -46,7 +51,6 @@ class Intake:
         self.arm_follower_control = controls.Follower(
             self.right_motor.device_id, signals.MotorAlignmentValue.ALIGNED
         )
-
 
     def _config_arm_motors(self):
         self.arm_motor_config = configs.TalonFXSConfiguration()
@@ -64,16 +68,31 @@ class Intake:
             5, lambda: self.right_motor.configurator.apply(self.arm_motor_config)
         )
 
-
-
     def _config_spin_motor(self):
         # Configure motors
         spin_config = configs.TalonFXConfiguration()
         spin_config.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
-        spin_config.motor_output.inverted = signals.InvertedValue.COUNTER_CLOCKWISE_POSITIVE
+        spin_config.motor_output.inverted = (
+            signals.InvertedValue.COUNTER_CLOCKWISE_POSITIVE
+        )
         spin_config.current_limits.stator_current_limit = self.spin_amps
         spin_config.current_limits.stator_current_limit_enable = True
         tryUntilOk(5, lambda: self.spin_motor.configurator.apply(spin_config))
+
+    def _p_controller(self, setpoint: float, position: float) -> float:
+        """
+        Pure p controller that has diffrent gains for going up and down cause gravity
+        """
+
+        error = clamp((setpoint - position) / 90, -1.0, 1.0)
+
+        if abs(error) < self.tolerance:
+            return 0.0
+
+        # 0.0 is up and 90 is down so if we want to go down error will be positive
+        if error < 0.0:
+            return self.down_kP * error
+        return self.up_kP * error
 
     """
     CONTROL METHODS
@@ -81,12 +100,12 @@ class Intake:
 
     def set_arm_voltage(self, voltage: units.volt) -> None:
         self.arm_control = self.volt_control.with_output(voltage)
-        self.arm_voltage= voltage
+        self.arm_voltage = voltage
         self.arm_manual = True
 
     def set_wheel_voltage(self, voltage: units.volt) -> None:
         self.spin_control = self.volt_control.with_output(voltage)
-        self.target_angle = Arm_Angle.DOWN.value
+        self.target_angle = Intake_Angle.DOWN
 
     def set_arm_throttle(self, throttle: float):
         self.arm_control = self.throttle_control.with_output(throttle)
@@ -94,7 +113,7 @@ class Intake:
 
     def set_spin_throttle(self, throttle: float):
         self.spin_control = self.throttle_control.with_output(throttle)
-        self.target_angle = Arm_Angle.DOWN.value
+        self.target_angle = Intake_Angle.DOWN
 
     def set_arm_angle(self, angle):
         self.target_angle = angle
@@ -130,20 +149,17 @@ class Intake:
     def get_arm_voltage(self):
         return self.arm_voltage
 
-    def on_enable(self):
-        self.arm_controller = self.profile.create_arm_controller("Intake")
-
     def execute(self) -> None:
-        # if not self.arm_manual:
-        #     self.arm_voltage = self.arm_controller.calculate(
-        #         self.get_arm_angle(), self.target_angle
-        #     )
-        
-        if (self.get_arm_angle() <= Arm_Angle.STOWED and self.arm_voltage < 0.0) or (
-            self.get_arm_angle() >= Arm_Angle.DOWN and self.arm_voltage > 0.0
+        arm_angle = self.get_arm_angle()
+
+        if not self.arm_manual:
+            self.arm_voltage = -self._p_controller(arm_angle, self.target_angle)
+
+        if (arm_angle <= Intake_Angle.STOWED.value and self.arm_voltage < 0.0) or (
+            arm_angle >= Intake_Angle.DOWN.value and self.arm_voltage > 0.0
         ):
             self.arm_voltage = 0.0
-        
+
         self.right_motor.set_control(self.volt_control.with_output(self.arm_voltage))
         self.left_motor.set_control(self.volt_control.with_output(self.arm_voltage))
 
