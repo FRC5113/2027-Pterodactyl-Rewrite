@@ -17,7 +17,7 @@ class ShooterController(StateMachine):
 
     shooter_tolerance = SmartPreference(3.0)  # In Rotations per second
 
-    indexer_throttle = -0.8
+    indexer_throttle = 0.8
     kicker_throttle = 0.8
 
     def request_shot(self, velocity):

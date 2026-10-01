@@ -369,18 +369,17 @@ class SmartProfile(Sendable):
             self.tuning_enabled if feedback_enabled is None else feedback_enabled,
         )
 
-    @_requires({"kP", "kI", "kD", "kS", "kG", "kV", "kMaxV", "kMaxA"})
+    @_requires({"kP", "kI", "kD", "kS", "kG", "kV"})
     def create_arm_controller(
         self, key: str, feedback_enabled: bool = None
     ) -> SmartController:
         """Creates a profiled PID controller combined with an arm feedforward controller.
         Requires kP, kI, kD, kS, kV, kG, [kA optional]
         """
-        pid = ProfiledPIDController(
+        pid = PIDController(
             self.gains["kP"],
             self.gains["kI"],
             self.gains["kD"],
-            TrapezoidProfile.Constraints(self.gains["kMaxV"], self.gains["kMaxA"]),
         )
         feedforward = ArmFeedforward(
             self.gains["kS"],

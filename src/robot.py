@@ -4,6 +4,7 @@ import phoenix6
 from phoenix6 import CANBus, SignalLogger, units
 from phoenix6.hardware import TalonFX, TalonFXS
 from wpilib import DutyCycleEncoder, Gamepad, Notifier, RobotController
+from wpimath import Rotation2d
 
 import oi
 from components.indexer import Indexer
@@ -112,6 +113,9 @@ class MyRobot(LemonRobot):
                 "kP": 5.0,
                 "kI": 0.0,
                 "kD": 0.0,
+                "kS": 0.0,
+                "kV": 0.0,
+                "kG": 0.0,
             },
             not self.low_bandwidth,
         )
@@ -226,6 +230,8 @@ class MyRobot(LemonRobot):
                 self.sammi_curve(self.oi.drive_strafe()) * self.top_speed * mult,
                 self.sammi_curve(self.oi.drive_rotation()) * self.top_omega * mult,
             )
+            if self.oi.reset_gyro():
+                self.drivetrain.reset_heading()
 
         """
         SHOOTER
@@ -249,8 +255,8 @@ class MyRobot(LemonRobot):
                 self.intake.set_spin_throttle(-0.8)
 
             if self.oi.intake_up():
-                # self.intake.set_arm_voltage(-10.0)
-                self.intake.set_arm_angle(Intake_Angle.STOWED)
+                self.intake.set_arm_voltage(-10.0)
+                # self.intake.set_arm_angle(Intake_Angle.STOWED)
             elif self.oi.intake_down():
-                # self.intake.set_arm_voltage(10.0)
-                self.intake.set_arm_angle(Intake_Angle.DOWN)
+                self.intake.set_arm_voltage(6.0)
+                # self.intake.set_arm_angle(Intake_Angle.DOWN)

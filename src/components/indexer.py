@@ -25,7 +25,7 @@ class Indexer:
         )
         self.config.motor_output = configs.MotorOutputConfigs().with_neutral_mode(
             signals.NeutralModeValue.COAST
-        )
+        ).with_inverted(signals.InvertedValue.CLOCKWISE_POSITIVE)
 
         tryUntilOk(5, lambda: self.conveyor_motor.configurator.apply(self.config))
 

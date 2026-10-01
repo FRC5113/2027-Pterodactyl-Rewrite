@@ -11,8 +11,8 @@ from modified_libs.magicbot import feedback, will_reset_to
 
 
 class Intake_Angle(float, Enum):
-    STOWED = 2.0
-    DOWN = 90.0
+    STOWED = 0.5
+    DOWN = 93.5
 
 
 class Intake:
@@ -34,7 +34,7 @@ class Intake:
     arm_voltage = will_reset_to(0.0)
     arm_manual = will_reset_to(False)
 
-    ENCODER_OFFSET = 0.9434523809523809
+    ENCODER_OFFSET = 0.939484126984127
 
     def setup(self) -> None:
         self._config_arm_motors()
@@ -72,7 +72,7 @@ class Intake:
         spin_config = configs.TalonFXConfiguration()
         spin_config.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
         spin_config.motor_output.inverted = (
-            signals.InvertedValue.COUNTER_CLOCKWISE_POSITIVE
+            signals.InvertedValue.CLOCKWISE_POSITIVE
         )
         spin_config.current_limits.stator_current_limit = self.spin_amps
         spin_config.current_limits.stator_current_limit_enable = True
@@ -134,15 +134,16 @@ class Intake:
         return self.arm_voltage
 
     def on_enable(self):
-        self.arm_controller = self.profile.create_pid_controller("Intake Arm")
+        # self.arm_controller = self.profile.create_arm_controller("Intake Arm")
+        ...
 
     def execute(self) -> None:
         arm_angle = self.get_arm_angle()
 
-        if not self.arm_manual:
-            self.arm_voltage = self.arm_controller.calculate(
-                arm_angle, self.target_angle.value
-            )
+        # if not self.arm_manual:
+        #     self.arm_voltage = self.arm_controller.calculate(
+        #         arm_angle, self.target_angle.value
+        #     )
 
         if (arm_angle <= Intake_Angle.STOWED.value and self.arm_voltage < 0.0) or (
             arm_angle >= Intake_Angle.DOWN.value and self.arm_voltage > 0.0

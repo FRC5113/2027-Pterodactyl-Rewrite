@@ -17,6 +17,8 @@ from wpimath import (
 )
 from wpiutil import Color, Color8Bit
 
+import math
+
 from generated.tuner_constants import TunerConstants
 from lemonlib.smart import SmartProfile
 from lemonlib.util import Alert, AlertType
@@ -182,11 +184,11 @@ class SwerveDrive:  # (Sendable):
             pose, utils.get_current_time_seconds(timestamp), std_devs
         )
 
-    def curr_direction_forward(self) -> None:
+    def reset_heading(self) -> None:
         """
         Resets the direction the robot is currently facing.
         """
-        self.drivetrain.seed_field_centric()
+        self.drivetrain.seed_field_centric(Rotation2d(math.pi))
 
     def set_angle_relative(self, angle: Rotation2d):
         """
