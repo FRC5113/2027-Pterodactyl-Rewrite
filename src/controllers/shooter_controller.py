@@ -1,8 +1,9 @@
+from magicbot import StateMachine, feedback, state, will_reset_to
+
 from components.indexer import Indexer
 from components.kicker import Kicker
 from components.shooter import Shooter
 from lemonlib.smart import SmartPreference
-from modified_libs.magicbot import StateMachine, state, will_reset_to, feedback
 
 
 class ShooterController(StateMachine):

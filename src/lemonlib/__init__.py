@@ -1,12 +1,25 @@
+__version__ = "2027.0.0a7"
+
+from collections.abc import Callable
+
+from phoenix6.status_code import StatusCode
+
 from .control import LemonInput
-from .lemonbot.lemon_robot import LemonRobot
-from .lemonbot.tunable import fms_feedback
 from .vision import LemonCamera
+
+
+def try_until_ok(attempts: int, command: Callable[[], StatusCode]):
+    """
+    Utility function to repeatedly attempt a Phoenix 6 command until it returns an OK status code.
+    """
+    for _ in range(attempts):
+        code = command()
+        if code.is_ok():
+            break
+
 
 __all__ = [
     "LemonCamera",
     "LemonInput",
-    "LemonRobot",
-    "fms_feedback",
-    "is_fms_attached",
+    "try_until_ok",
 ]

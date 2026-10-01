@@ -1,8 +1,8 @@
+from magicbot import feedback, will_reset_to
 from phoenix6 import BaseStatusSignal, configs, controls, signals, units
 from phoenix6.hardware import TalonFXS
 
-from lemonlib.ctre import tryUntilOk
-from modified_libs.magicbot import feedback, will_reset_to
+from lemonlib import try_until_ok
 
 
 class Kicker:
@@ -27,8 +27,8 @@ class Kicker:
             signals.NeutralModeValue.BRAKE
         )
 
-        tryUntilOk(5, lambda: self.right_motor.configurator.apply(self.config))
-        tryUntilOk(5, lambda: self.left_motor.configurator.apply(self.config))
+        try_until_ok(5, lambda: self.right_motor.configurator.apply(self.config))
+        try_until_ok(5, lambda: self.left_motor.configurator.apply(self.config))
 
         self.volt_control = controls.VoltageOut(0.0)
         self.throttle_control = controls.DutyCycleOut(0.0)

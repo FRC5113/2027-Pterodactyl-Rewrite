@@ -1,4 +1,5 @@
-from wpilib import Gamepad, SmartDashboard
+import tunables
+from wpilib import Gamepad
 
 
 class OI_Base:
@@ -59,43 +60,43 @@ class DoubleOI(OI_Base):
         self.operator = operator
 
     def drive_forward(self) -> float:
-        return self.driver.getLeftY()
+        return self.driver.get_left_y()
 
     def drive_strafe(self) -> float:
-        return self.driver.getLeftX()
+        return self.driver.get_left_x()
 
     def drive_rotation(self) -> float:
-        return self.driver.getRightX()
+        return self.driver.get_right_x()
 
     def drive_limit_speed75(self) -> bool:
-        return self.driver.getRightTriggerAxis() > 0.8
+        return self.driver.get_right_trigger() > 0.8
 
     def drive_limit_speed50(self) -> bool:
-        return self.driver.getLeftTriggerAxis() > 0.8
+        return self.driver.get_left_trigger() > 0.8
 
     def reset_gyro(self) -> bool:
-        return self.driver.getWestFaceButton()
+        return self.driver.get_face_left_button()
 
     def intake(self) -> bool:
-        return self.operator.getLeftTriggerAxis() > 0.8
+        return self.operator.get_left_trigger() > 0.8
 
     def outtake(self) -> bool:
-        return self.operator.getLeftBumperButton()
+        return self.operator.get_left_bumper_button()
 
     def intake_up(self) -> bool:
-        return self.operator.getWestFaceButton()
+        return self.operator.get_face_left_button()
 
     def intake_down(self) -> bool:
-        return self.operator.getEastFaceButton()
+        return self.operator.get_face_right_button()
 
     def hard_shoot(self) -> bool:
-        return self.operator.getSouthFaceButton()
+        return self.operator.get_face_down_button()
 
     def auto_shoot(self) -> bool:
-        return self.operator.getRightTriggerAxis() > 0.8
+        return self.operator.get_right_trigger() > 0.8
 
     def unjam(self) -> bool:
-        return self.operator.getNorthFaceButton()
+        return self.operator.get_face_up_button()
 
 
 class SingleOI(OI_Base):
@@ -107,48 +108,48 @@ class SingleOI(OI_Base):
         self.controller = controller
 
     def drive_forward(self) -> float:
-        return self.controller.getLeftY()
+        return self.controller.get_left_y()
 
     def drive_strafe(self) -> float:
-        return self.controller.getLeftX()
+        return self.controller.get_left_x()
 
     def drive_rotation(self) -> float:
-        return -self.controller.getRightX()
+        return -self.controller.get_right_x()
 
     def reset_gyro(self) -> bool:
-        return self.controller.getStartButton()
+        return self.controller.get_start_button()
 
     def intake(self) -> bool:
-        return self.controller.getLeftTriggerAxis() > 0.8
+        return self.controller.get_left_trigger() > 0.8
 
     def outtake(self) -> bool:
-        return self.controller.getLeftBumperButton()
+        return self.controller.get_left_bumper_button()
 
     def intake_up(self) -> bool:
-        return self.controller.getWestFaceButton()
+        return self.controller.get_face_left_button()
 
     def intake_down(self) -> bool:
-        return self.controller.getEastFaceButton()
+        return self.controller.get_face_right_button()
 
     def hard_shoot(self) -> bool:
-        return self.controller.getSouthFaceButton()
+        return self.controller.get_face_down_button()
 
     def auto_shoot(self) -> bool:
-        return self.controller.getRightTriggerAxis() > 0.8
+        return self.controller.get_right_trigger() > 0.8
 
     def unjam(self) -> bool:
-        return self.controller.getNorthFaceButton()
+        return self.controller.get_face_up_button()
 
 
 class Twitch_OI(OI_Base):
     def drive_forward(self) -> float:
-        return SmartDashboard.getNumber("LeftY")
+        return tunables.add("LeftY", 0.0).get()
 
     def drive_strafe(self) -> float:
-        return SmartDashboard.getNumber("LeftX")
+        return tunables.add("LeftX", 0.0).get()
 
     def drive_rotation(self) -> float:
-        return SmartDashboard.getNumber("RightX")
+        return tunables.add("RightX", 0.0).get()
 
     def drive_limit_speed75(self) -> bool:
         return False
@@ -160,7 +161,7 @@ class Twitch_OI(OI_Base):
         return False
 
     def intake(self) -> bool:
-        return SmartDashboard.getBoolean("intake")
+        return tunables.add("intake", False).get()
 
     def outtake(self) -> bool:
         return False
@@ -175,7 +176,7 @@ class Twitch_OI(OI_Base):
         return False
 
     def auto_shoot(self) -> bool:
-        return SmartDashboard.getBoolean("shoot")
+        return tunables.add("shoot", False).get()
 
     def funny_shoot(self) -> bool:
         return False

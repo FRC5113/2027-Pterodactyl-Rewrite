@@ -1,13 +1,14 @@
+import math
 from enum import Enum
 
+from magicbot import feedback, will_reset_to
 from phoenix6 import BaseStatusSignal, configs, controls, signals, units
 from phoenix6.hardware import TalonFX, TalonFXS
-from wpilib import DutyCycleEncoder, SmartDashboard
+from wpilib import DutyCycleEncoder
 
-from lemonlib.ctre import tryUntilOk
-from lemonlib.smart import SmartProfile, SmartPreference
+from lemonlib import try_until_ok
+from lemonlib.smart import SmartPreference, SmartProfile
 from lemonlib.util import clamp
-from modified_libs.magicbot import feedback, will_reset_to
 
 
 class Intake_Angle(float, Enum):
@@ -16,7 +17,6 @@ class Intake_Angle(float, Enum):
 
 
 class Intake:
-
     spin_motor: TalonFX
     right_motor: TalonFXS
     left_motor: TalonFXS
@@ -33,6 +33,9 @@ class Intake:
     spin_control = will_reset_to(controls.StaticBrake())
     arm_voltage = will_reset_to(0.0)
     arm_manual = will_reset_to(False)
+
+    intake_kP = SmartPreference(12.0)
+    intake_kG = SmartPreference(0.0)
 
     ENCODER_OFFSET = 0.939484126984127
 
@@ -62,8 +65,10 @@ class Intake:
             signals.MotorArrangementValue.BRUSHED_DC
         )
 
-        tryUntilOk(5, lambda: self.left_motor.configurator.apply(self.arm_motor_config))
-        tryUntilOk(
+        try_until_ok(
+            5, lambda: self.left_motor.configurator.apply(self.arm_motor_config)
+        )
+        try_until_ok(
             5, lambda: self.right_motor.configurator.apply(self.arm_motor_config)
         )
 
@@ -71,12 +76,24 @@ class Intake:
         # Configure motors
         spin_config = configs.TalonFXConfiguration()
         spin_config.motor_output.neutral_mode = signals.NeutralModeValue.BRAKE
-        spin_config.motor_output.inverted = (
-            signals.InvertedValue.CLOCKWISE_POSITIVE
-        )
+        spin_config.motor_output.inverted = signals.InvertedValue.CLOCKWISE_POSITIVE
         spin_config.current_limits.stator_current_limit = self.spin_amps
         spin_config.current_limits.stator_current_limit_enable = True
-        tryUntilOk(5, lambda: self.spin_motor.configurator.apply(spin_config))
+        try_until_ok(5, lambda: self.spin_motor.configurator.apply(spin_config))
+
+    def __controller(self, setpoint: float, position: float) -> float:
+        """
+        custom p controller with kG cause wpione no work
+        """
+
+        error = clamp((setpoint - position) / 90, -1.0, 1.0)
+
+        if abs(error) < self.tolerance:
+            return 0.0
+
+        return (self.intake_kP * error) + (
+            self.intake_kG * math.cos(math.radians(position))
+        )
 
     """
     CONTROL METHODS
@@ -134,16 +151,16 @@ class Intake:
         return self.arm_voltage
 
     def on_enable(self):
-        # self.arm_controller = self.profile.create_arm_controller("Intake Arm")
-        ...
+        self.arm_controller = self.profile.create_arm_controller("Intake Arm")
+        self.arm_controller.setTolerance(self.tolerance)
 
     def execute(self) -> None:
         arm_angle = self.get_arm_angle()
 
-        # if not self.arm_manual:
-        #     self.arm_voltage = self.arm_controller.calculate(
-        #         arm_angle, self.target_angle.value
-        #     )
+        if not self.arm_manual:
+            self.arm_voltage = self.arm_controller.calculate(
+                arm_angle, self.target_angle.value
+            )
 
         if (arm_angle <= Intake_Angle.STOWED.value and self.arm_voltage < 0.0) or (
             arm_angle >= Intake_Angle.DOWN.value and self.arm_voltage > 0.0

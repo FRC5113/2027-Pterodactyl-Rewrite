@@ -1,3 +1,7 @@
+import math
+
+import telemetry
+from magicbot import will_reset_to
 from ntcore import NetworkTableInstance
 from phoenix6 import SignalLogger, hardware, swerve, units, utils
 from phoenix6.swerve import requests
@@ -6,7 +10,6 @@ from wpilib import (
     DriverStationBackend,
     Mechanism2d,
     MechanismLigament2d,
-    SmartDashboard,
 )
 from wpimath import (
     ChassisVelocities,
@@ -17,12 +20,9 @@ from wpimath import (
 )
 from wpiutil import Color, Color8Bit
 
-import math
-
 from generated.tuner_constants import TunerConstants
 from lemonlib.smart import SmartProfile
 from lemonlib.util import Alert, AlertType
-from modified_libs.magicbot import will_reset_to
 
 
 class SwerveDrive:  # (Sendable):
@@ -36,10 +36,10 @@ class SwerveDrive:  # (Sendable):
 
     stopped = will_reset_to(True)
 
-    BLUE_ALLIANCE_PERSPECTIVE_ROTATION = Rotation2d.fromDegrees(
+    BLUE_ALLIANCE_PERSPECTIVE_ROTATION = Rotation2d.from_degrees(
         0
     )  # Blue alliance sees forward as 0 degrees (toward red alliance wall)
-    RED_ALLIANCE_PERSPECTIVE_ROTATION = Rotation2d.fromDegrees(
+    RED_ALLIANCE_PERSPECTIVE_ROTATION = Rotation2d.from_degrees(
         180
     )  # Red alliance sees forward as 180 degrees (toward blue alliance wall)
 
@@ -195,7 +195,7 @@ class SwerveDrive:  # (Sendable):
         If the robot is facing some other angle relative to the drivers forward direction.
         For example, if the robot is facing left, then pass in an angle of +90 degrees (counter-clockwise).
         """
-        self.drivetrain.set_operator_perspective_forward(angle)
+        self.drivetrain.set_operator_forward_direction(angle)
 
     def reset_heading_to_blue_origin(self) -> None:
         """
@@ -222,11 +222,11 @@ class SwerveDrive:  # (Sendable):
         """
         if (
             not self.has_applied_operator_perspective
-            or DriverStationBackend.isDisabled()
+            or DriverStationBackend.is_disabled()
         ):
-            alliance_color = DriverStationBackend.getAlliance()
+            alliance_color = DriverStationBackend.get_alliance()
             if alliance_color is not None:
-                self.drivetrain.set_operator_perspective_forward(
+                self.drivetrain.set_operator_forward_direction(
                     self.RED_ALLIANCE_PERSPECTIVE_ROTATION
                     if alliance_color == Alliance.RED
                     else self.BLUE_ALLIANCE_PERSPECTIVE_ROTATION
@@ -259,36 +259,36 @@ class Telemetry:
         self._max_speed = max_speed
 
         # What to publish over networktables for telemetry
-        self._inst = NetworkTableInstance.getDefault()
+        self._inst = NetworkTableInstance.get_default()
 
         # Robot swerve drive state
-        self._drive_state_table = self._inst.getTable("DriveState")
-        self._drive_pose = self._drive_state_table.getStructTopic(
+        self._drive_state_table = self._inst.get_table("DriveState")
+        self._drive_pose = self._drive_state_table.get_struct_topic(
             "Pose", Pose2d
         ).publish()
-        self._drive_velocity = self._drive_state_table.getStructTopic(
+        self._drive_velocity = self._drive_state_table.get_struct_topic(
             "Velocity", ChassisVelocities
         ).publish()
-        self._drive_module_positions = self._drive_state_table.getStructArrayTopic(
+        self._drive_module_positions = self._drive_state_table.get_struct_array_topic(
             "ModulePositions", SwerveModulePosition
         ).publish()
-        self._drive_module_velocities = self._drive_state_table.getStructArrayTopic(
+        self._drive_module_velocities = self._drive_state_table.get_struct_array_topic(
             "ModuleVelocities", SwerveModuleVelocity
         ).publish()
-        self._drive_module_targets = self._drive_state_table.getStructArrayTopic(
+        self._drive_module_targets = self._drive_state_table.get_struct_array_topic(
             "ModuleTargets", SwerveModuleVelocity
         ).publish()
-        self._drive_timestamp = self._drive_state_table.getDoubleTopic(
+        self._drive_timestamp = self._drive_state_table.get_double_topic(
             "Timestamp"
         ).publish()
-        self._drive_odometry_frequency = self._drive_state_table.getDoubleTopic(
+        self._drive_odometry_frequency = self._drive_state_table.get_double_topic(
             "OdometryFrequency"
         ).publish()
 
         # Robot pose for field positioning
-        self._table = self._inst.getTable("Pose")
-        self._field_pub = self._table.getDoubleArrayTopic("Robot").publish()
-        self._field_type_pub = self._table.getStringTopic(".type").publish()
+        self._table = self._inst.get_table("Pose")
+        self._field_pub = self._table.get_double_array_topic("Robot").publish()
+        self._field_type_pub = self._table.get_string_topic(".type").publish()
 
         # Mechanisms to represent the swerve module states
         self._module_mechanisms: list[Mechanism2d] = [
@@ -300,37 +300,33 @@ class Telemetry:
         # A direction and length changing ligament for speed representation
         self._module_speeds: list[MechanismLigament2d] = [
             self._module_mechanisms[0]
-            .getRoot("RootSpeed", 0.5, 0.5)
-            .appendLigament("Speed", 0.5, 0),
+            .get_root("RootSpeed", 0.5, 0.5)
+            .append_ligament("Speed", 0.5, 0),
             self._module_mechanisms[1]
-            .getRoot("RootSpeed", 0.5, 0.5)
-            .appendLigament("Speed", 0.5, 0),
+            .get_root("RootSpeed", 0.5, 0.5)
+            .append_ligament("Speed", 0.5, 0),
             self._module_mechanisms[2]
-            .getRoot("RootSpeed", 0.5, 0.5)
-            .appendLigament("Speed", 0.5, 0),
+            .get_root("RootSpeed", 0.5, 0.5)
+            .append_ligament("Speed", 0.5, 0),
             self._module_mechanisms[3]
-            .getRoot("RootSpeed", 0.5, 0.5)
-            .appendLigament("Speed", 0.5, 0),
+            .get_root("RootSpeed", 0.5, 0.5)
+            .append_ligament("Speed", 0.5, 0),
         ]
         # A direction changing and length constant ligament for module direction
         self._module_directions: list[MechanismLigament2d] = [
             self._module_mechanisms[0]
-            .getRoot("RootDirection", 0.5, 0.5)
-            .appendLigament("Direction", 0.1, 0, 0, Color8Bit(Color.WHITE)),
+            .get_root("RootDirection", 0.5, 0.5)
+            .append_ligament("Direction", 0.1, 0, 0, Color8Bit(Color.WHITE)),
             self._module_mechanisms[1]
-            .getRoot("RootDirection", 0.5, 0.5)
-            .appendLigament("Direction", 0.1, 0, 0, Color8Bit(Color.WHITE)),
+            .get_root("RootDirection", 0.5, 0.5)
+            .append_ligament("Direction", 0.1, 0, 0, Color8Bit(Color.WHITE)),
             self._module_mechanisms[2]
-            .getRoot("RootDirection", 0.5, 0.5)
-            .appendLigament("Direction", 0.1, 0, 0, Color8Bit(Color.WHITE)),
+            .get_root("RootDirection", 0.5, 0.5)
+            .append_ligament("Direction", 0.1, 0, 0, Color8Bit(Color.WHITE)),
             self._module_mechanisms[3]
-            .getRoot("RootDirection", 0.5, 0.5)
-            .appendLigament("Direction", 0.1, 0, 0, Color8Bit(Color.WHITE)),
+            .get_root("RootDirection", 0.5, 0.5)
+            .append_ligament("Direction", 0.1, 0, 0, Color8Bit(Color.WHITE)),
         ]
-
-        # Set up the module state Mechanism2d telemetry
-        for i, module_mechanism in enumerate(self._module_mechanisms):
-            SmartDashboard.putData(f"Module {i}", module_mechanism)
 
     def telemeterize(self, state: swerve.SwerveDrivetrain.SwerveDriveState):
         """
@@ -372,8 +368,12 @@ class Telemetry:
 
         # Telemeterize each module state to a Mechanism2d
         for i, module_state in enumerate(state.module_velocities):
-            self._module_speeds[i].setAngle(module_state.angle.degrees())
-            self._module_directions[i].setAngle(module_state.angle.degrees())
-            self._module_speeds[i].setLength(
+            self._module_speeds[i].set_angle(module_state.angle.degrees())
+            self._module_directions[i].set_angle(module_state.angle.degrees())
+            self._module_speeds[i].set_length(
                 module_state.velocity / (2 * self._max_speed)
             )
+
+        # Set up the module state Mechanism2d telemetry
+        for i, module_mechanism in enumerate(self._module_mechanisms):
+            telemetry.log(f"Module {i}", module_mechanism)

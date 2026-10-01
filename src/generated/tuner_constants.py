@@ -1,5 +1,5 @@
 from phoenix6 import CANBus, configs, signals, swerve, units
-from wpimath.units import inchesToMeters
+from wpimath.units import inches_to_meters
 
 
 class TunerConstants:
@@ -74,7 +74,8 @@ class TunerConstants:
             configs.CurrentLimitsConfigs()
             # Default supply current limit is 70 A, but it can be lowered to avoid brownouts.
             # Supply current limits can be larger than the breaker current rating.
-            .with_supply_current_limit(70.0).with_supply_current_limit_enable(True)
+            .with_supply_current_limit(70.0)
+            .with_supply_current_limit_enable(True)
         )
         .with_closed_loop_ramps(
             configs.ClosedLoopRampsConfigs().with_voltage_closed_loop_ramp_period(0.3)
@@ -84,7 +85,8 @@ class TunerConstants:
         configs.CurrentLimitsConfigs()
         # Swerve azimuth does not require much torque output, so we can set a relatively low
         # stator current limit to help avoid brownouts without impacting performance.
-        .with_stator_current_limit(60.0).with_stator_current_limit_enable(True)
+        .with_stator_current_limit(60.0)
+        .with_stator_current_limit_enable(True)
     )
     _encoder_initial_configs = configs.CANcoderConfiguration()
     # Configs for the Pigeon 2; leave this None to skip applying Pigeon 2 configs
@@ -110,7 +112,7 @@ class TunerConstants:
 
     _drive_gear_ratio = 6.746031746031747
     _steer_gear_ratio = 21.428571428571427
-    _wheel_radius: units.meter = inchesToMeters(2)
+    _wheel_radius: units.meter = inches_to_meters(2)
 
     _invert_left_side = False
     _invert_right_side = True
@@ -126,7 +128,7 @@ class TunerConstants:
 
     drivetrain_constants = (
         swerve.SwerveDrivetrainConstants()
-        .with_can_bus_name(canbus.name)
+        .with_network(canbus)
         .with_pigeon2_id(_pigeon_id)
         .with_pigeon2_configs(_pigeon_configs)
     )
@@ -167,8 +169,8 @@ class TunerConstants:
     _front_left_steer_motor_inverted = True
     _front_left_encoder_inverted = False
 
-    _front_left_x_pos: units.meter = inchesToMeters(11)
-    _front_left_y_pos: units.meter = inchesToMeters(11)
+    _front_left_x_pos: units.meter = inches_to_meters(11)
+    _front_left_y_pos: units.meter = inches_to_meters(11)
 
     # Front Right
     _front_right_drive_motor_id = 11
@@ -178,8 +180,8 @@ class TunerConstants:
     _front_right_steer_motor_inverted = True
     _front_right_encoder_inverted = False
 
-    _front_right_x_pos: units.meter = inchesToMeters(11)
-    _front_right_y_pos: units.meter = inchesToMeters(-11)
+    _front_right_x_pos: units.meter = inches_to_meters(11)
+    _front_right_y_pos: units.meter = inches_to_meters(-11)
 
     # Back Left
     _back_left_drive_motor_id = 31
@@ -189,8 +191,8 @@ class TunerConstants:
     _back_left_steer_motor_inverted = True
     _back_left_encoder_inverted = False
 
-    _back_left_x_pos: units.meter = inchesToMeters(-11)
-    _back_left_y_pos: units.meter = inchesToMeters(11)
+    _back_left_x_pos: units.meter = inches_to_meters(-11)
+    _back_left_y_pos: units.meter = inches_to_meters(11)
 
     # Back Right
     _back_right_drive_motor_id = 21
@@ -200,8 +202,8 @@ class TunerConstants:
     _back_right_steer_motor_inverted = True
     _back_right_encoder_inverted = False
 
-    _back_right_x_pos: units.meter = inchesToMeters(-11)
-    _back_right_y_pos: units.meter = inchesToMeters(-11)
+    _back_right_x_pos: units.meter = inches_to_meters(-11)
+    _back_right_y_pos: units.meter = inches_to_meters(-11)
 
     front_left = _constants_creator.create_module_constants(
         _front_left_steer_motor_id,

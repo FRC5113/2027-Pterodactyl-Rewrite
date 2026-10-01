@@ -1,12 +1,12 @@
 import math
 
+from magicbot import feedback, will_reset_to
+
 from components.swerve_drive import SwerveDrive
 from game import alliance_hub_pos, is_red
-from modified_libs.magicbot import feedback, will_reset_to
 
 
 class Ballistics:
-
     drivetrain: SwerveDrive
 
     shooter_speed = will_reset_to(0.0)
@@ -66,9 +66,7 @@ class Ballistics:
 
         self.distance_hub = hub_pose.distance(pose)
 
-        self.target_angle = math.atan2(
-            (hub_pose.Y() - pose.Y()), (hub_pose.X() - pose.X())
-        )
+        self.target_angle = math.atan2((hub_pose.y - pose.y), (hub_pose.x - pose.x))
 
         self.shooter_speed = self._linear_interp(
             self.distance_hub, self.distance_lookup, self.speed_lookup

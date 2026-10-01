@@ -1,10 +1,11 @@
 import math
 
 import phoenix6
+import tunables
+from magicbot import MagicRobot
 from phoenix6 import CANBus, SignalLogger, units
 from phoenix6.hardware import TalonFX, TalonFXS
-from wpilib import DutyCycleEncoder, Gamepad, Notifier, RobotController
-from wpimath import Rotation2d
+from wpilib import CANPort, DriverStationBackend, DutyCycleEncoder, Gamepad
 
 import oi
 from components.indexer import Indexer
@@ -12,16 +13,14 @@ from components.intake import Intake, Intake_Angle
 from components.kicker import Kicker
 from components.leds import LEDStrip
 from components.shooter import Shooter
-from components.swerve_drive import SwerveDrive
-from components.simulation.swerve_sim import SwerveSim
 from components.simulation.intake_sim import IntakeSim
+from components.simulation.swerve_sim import SwerveSim
+from components.swerve_drive import SwerveDrive
 from controllers.ballistics import Ballistics
 from controllers.drive_control import DriveControl
-from controllers.game_piece_sim import GamePieceSim
 from controllers.score_controller import ScoreController
 from controllers.shooter_controller import ShooterController
 from generated.tuner_constants import TunerConstants
-from lemonlib import LemonRobot
 from lemonlib.smart import SmartPreference, SmartProfile
 from lemonlib.util import (
     AlertManager,
@@ -30,7 +29,7 @@ from lemonlib.util import (
 )
 
 
-class MyRobot(LemonRobot):
+class MyRobot(MagicRobot):
     score_controller: ScoreController
     ballistics: Ballistics
     shooter_controller: ShooterController
@@ -49,7 +48,7 @@ class MyRobot(LemonRobot):
 
     _SIM_LOOP_PERIOD: phoenix6.units.second = 0.004  # 4 ms temp
 
-    def createObjects(self):
+    def create_objects(self):
         """
         - It puts all of your motor/sensor initialization in the same
           place, so that if you need to change a port/pin number it
@@ -68,6 +67,8 @@ class MyRobot(LemonRobot):
         SignalLogger.start()
 
         self.max_speed: units.meters_per_second = TunerConstants.speed_at_12_volts
+
+        self.low_bandwidth = DriverStationBackend.is_fms_attached()
 
         self.translation_profile = SmartProfile(
             "translation",
@@ -96,7 +97,7 @@ class MyRobot(LemonRobot):
         INTAKE
         """
 
-        self.intake_canbus = CANBus.systemcore(1)
+        self.intake_canbus = CANBus(CANPort.CAN_S1)
 
         self.intake_spin_motor = TalonFX(51, self.intake_canbus)
         self.intake_left_motor = TalonFXS(52, self.intake_canbus)
@@ -110,23 +111,25 @@ class MyRobot(LemonRobot):
         self.intake_profile = SmartProfile(
             "Intake",
             {
-                "kP": 5.0,
+                "kP": 0.15,
                 "kI": 0.0,
                 "kD": 0.0,
                 "kS": 0.0,
                 "kV": 0.0,
                 "kG": 0.0,
+                "kMaxV": 150.0,
+                "kMaxA": 500.0,
             },
             not self.low_bandwidth,
         )
 
-        self.intake_tolerance = 3.0
+        self.intake_tolerance = 0.5
 
         """
         SHOOTER
         """
 
-        self.shooter_canbus = CANBus.systemcore(0)
+        self.shooter_canbus = CANBus(CANPort.CAN_S0)
 
         self.shooter_left_motor = TalonFX(2, self.shooter_canbus)
         self.shooter_right_motor = TalonFX(3, self.shooter_canbus)
@@ -154,7 +157,7 @@ class MyRobot(LemonRobot):
         """
         INDEXER
         """
-        self.indexer_canbus = CANBus.systemcore(2)
+        self.indexer_canbus = CANBus(CANPort.CAN_S2)
 
         self.indexer_conveyor_motor = TalonFXS(6, self.indexer_canbus)
         self.indexer_conveyor_amps: units.ampere = 20.0
@@ -185,36 +188,38 @@ class MyRobot(LemonRobot):
                 "Low Bandwidth Mode is active! Tuning is disabled.", AlertType.INFO
             )
 
+        self.intake_voltage = tunables.add("intake_volt", 0.0)
+
     """
     MODE INITIALIZATION
     """
 
-    def teleopInit(self) -> None:
+    def teleop_init(self) -> None:
         self.primary = Gamepad(0)
         self.secondary = Gamepad(1)
         # self.oi = oi.Twitch_OI()
         # self.oi = oi.DoubleOI(self.primary, self.secondary)
         self.oi = oi.SingleOI(self.primary)
 
-    def _simulationInit(self):
+    def simulation_init(self):
         self.swerve_sim = SwerveSim(
             self.drivetrain
         )  # Has a notifier built in so does not need periodic called
 
         self.intake_sim = IntakeSim(self.intake)
 
-    def _simulationPeriodic(self) -> None:
+    def simulation_periodic(self) -> None:
         self.intake_sim.simulation_periodic()
 
     """
     PERIODIC
     """
 
-    def teleopPeriodic(self) -> None:
+    def teleop_periodic(self) -> None:
         """
         SWERVE
         """
-        with self.consumeExceptions():
+        with self.consume_exceptions():
             # if both 25% else 50 or 75
             if self.oi.drive_limit_speed50() and self.oi.drive_limit_speed75():
                 mult = 0.25
@@ -236,7 +241,7 @@ class MyRobot(LemonRobot):
         """
         SHOOTER
         """
-        with self.consumeExceptions():
+        with self.consume_exceptions():
             if self.oi.hard_shoot():
                 self.shooter_controller.request_shot(47.5)
             elif self.oi.auto_shoot():
@@ -248,15 +253,19 @@ class MyRobot(LemonRobot):
         """
         INTAKE
         """
-        with self.consumeExceptions():
+        with self.consume_exceptions():
             if self.oi.intake():
                 self.intake.set_spin_throttle(0.8)
             elif self.oi.outtake():
                 self.intake.set_spin_throttle(-0.8)
-
+            # self.intake.set_arm_voltage(
+            #     (self.intake_voltage.get() * math.cos(self.intake.get_arm_angle()))
+            #     if abs(self.intake_voltage.get()) > 0.0
+            #     else 6
+            # )
             if self.oi.intake_up():
-                self.intake.set_arm_voltage(-10.0)
-                # self.intake.set_arm_angle(Intake_Angle.STOWED)
+                # self.intake.set_arm_voltage(-10.0)
+                self.intake.set_arm_angle(Intake_Angle.STOWED)
             elif self.oi.intake_down():
-                self.intake.set_arm_voltage(6.0)
-                # self.intake.set_arm_angle(Intake_Angle.DOWN)
+                # self.intake.set_arm_voltage(6.0)
+                self.intake.set_arm_angle(Intake_Angle.DOWN)

@@ -1,14 +1,14 @@
 import math
 
+from magicbot import StateMachine, state, will_reset_to
 from wpimath import Rotation2d
 
-from components.intake import Intake_Angle, Intake
+from components.intake import Intake
 from components.shooter import Shooter
 from components.swerve_drive import SwerveDrive
 from controllers.ballistics import Ballistics
 from controllers.drive_control import DriveControl
 from controllers.shooter_controller import ShooterController
-from modified_libs.magicbot import StateMachine, state, will_reset_to
 
 
 class ScoreController(StateMachine):

@@ -1,12 +1,11 @@
+from magicbot import feedback, will_reset_to
 from phoenix6 import BaseStatusSignal, configs, controls, signals, units
 from phoenix6.hardware import TalonFXS
 
-from lemonlib.ctre import tryUntilOk
-from modified_libs.magicbot import feedback, will_reset_to
+from lemonlib import try_until_ok
 
 
 class Indexer:
-
     conveyor_motor: TalonFXS
     conveyor_amps: units.ampere
 
@@ -23,11 +22,13 @@ class Indexer:
         self.config.commutation = configs.CommutationConfigs().with_motor_arrangement(
             signals.MotorArrangementValue.BRUSHED_DC
         )
-        self.config.motor_output = configs.MotorOutputConfigs().with_neutral_mode(
-            signals.NeutralModeValue.COAST
-        ).with_inverted(signals.InvertedValue.CLOCKWISE_POSITIVE)
+        self.config.motor_output = (
+            configs.MotorOutputConfigs()
+            .with_neutral_mode(signals.NeutralModeValue.COAST)
+            .with_inverted(signals.InvertedValue.CLOCKWISE_POSITIVE)
+        )
 
-        tryUntilOk(5, lambda: self.conveyor_motor.configurator.apply(self.config))
+        try_until_ok(5, lambda: self.conveyor_motor.configurator.apply(self.config))
 
         self.volt_control = controls.VoltageOut(0.0)
         self.throttle_control = controls.DutyCycleOut(0.0)

@@ -1,3 +1,4 @@
+from magicbot import feedback, will_reset_to
 from phoenix6 import (
     BaseStatusSignal,
     configs,
@@ -9,13 +10,11 @@ from phoenix6.hardware import TalonFX
 from phoenix6.signals import MotorAlignmentValue
 from wpilib import RobotController
 
-from lemonlib.ctre import tryUntilOk
+from lemonlib import try_until_ok
 from lemonlib.smart import SmartProfile
-from modified_libs.magicbot import feedback, will_reset_to
 
 
 class Shooter:
-
     right_motor: TalonFX
     left_motor: TalonFX
 
@@ -81,11 +80,11 @@ class Shooter:
         self.voltage_request = controls.VoltageOut(0.0)
 
         # apply device configs
-        tryUntilOk(
+        try_until_ok(
             self._NUM_CONFIG_ATTEMPTS,
             lambda: self.right_motor.configurator.apply(self.leader_motor_configs),
         )
-        tryUntilOk(
+        try_until_ok(
             self._NUM_CONFIG_ATTEMPTS,
             lambda: self.left_motor.configurator.apply(self.follower_motor_configs),
         )
@@ -127,7 +126,7 @@ class Shooter:
         :returns: The applied voltage to the shooter.
         :rtype: volts
         """
-        return self.left_motor.getThrottle() * RobotController.getBatteryVoltage()
+        return self.left_motor.get_throttle() * RobotController.get_battery_voltage()
 
     @feedback
     def get_supply_amps(self):

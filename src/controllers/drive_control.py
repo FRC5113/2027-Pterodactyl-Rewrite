@@ -1,8 +1,8 @@
+from magicbot import StateMachine, state, will_reset_to
 from phoenix6 import swerve, units
 from wpimath import Rotation2d
 
 from components.swerve_drive import SwerveDrive
-from modified_libs.magicbot import StateMachine, state, will_reset_to
 
 
 class DriveControl(StateMachine):

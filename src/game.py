@@ -3,7 +3,7 @@
 import dataclasses
 import typing
 
-import robotpy_apriltag
+import robotpy_fields
 import wpilib
 from wpimath import (
     Pose2d,
@@ -12,8 +12,8 @@ from wpimath import (
     Translation2d,
 )
 
-apriltag_layout = robotpy_apriltag.AprilTagFieldLayout.loadField(
-    robotpy_apriltag.AprilTagField.k2026RebuiltWelded
+apriltag_layout = robotpy_fields.get_field(
+    robotpy_fields.FieldId.FRC_2026_REBUILT_WELDED
 )
 
 TagId = typing.Literal[
@@ -53,10 +53,10 @@ TagId = typing.Literal[
 
 get_fiducial_pose = typing.cast(
     typing.Callable[[TagId], Pose3d],
-    apriltag_layout.getTagPose,
+    apriltag_layout.get_tag_pose,
 )
 
-APRILTAGS = apriltag_layout.getTags()
+APRILTAGS = apriltag_layout.get_tags()
 
 
 @dataclasses.dataclass(slots=True)
@@ -66,11 +66,11 @@ class Tag2d:
 
 
 APRILTAGS_2D = [
-    Tag2d(typing.cast(TagId, tag.ID), tag.pose.toPose2d()) for tag in APRILTAGS
+    Tag2d(typing.cast(TagId, tag.id), tag.pose.to_pose2d()) for tag in APRILTAGS
 ]
 
-FIELD_WIDTH = apriltag_layout.getFieldWidth()
-FIELD_LENGTH = apriltag_layout.getFieldLength()
+FIELD_WIDTH = apriltag_layout.get_width()
+FIELD_LENGTH = apriltag_layout.get_length()
 
 INTERSECT_OF_TRANSITION_ALLIANCE_ZONE_FROM_ALLIANCE_WALL = 3.9
 INTERSECT_OF_NEUTRAL_TRANSITION_ZONE_FROM_ALLIANCE_WALL = 6
@@ -95,8 +95,8 @@ def field_flip_translation2d(t: Translation2d):
 
 
 BLUE_HUB_POS = (
-    get_fiducial_pose(20).translation().toTranslation2d()
-    + get_fiducial_pose(26).translation().toTranslation2d()
+    get_fiducial_pose(20).translation().to_translation2d()
+    + get_fiducial_pose(26).translation().to_translation2d()
 ) / 2
 
 BLUE_SHOOT_ANCHOR_1 = Translation2d(
@@ -198,4 +198,4 @@ def alliance_shoot_line(is_red: bool) -> float:
 
 # This will default to the blue alliance if a proper link to the driver station has not yet been established
 def is_red() -> bool:
-    return wpilib.DriverStationBackend.getAlliance() == wpilib.Alliance.RED
+    return wpilib.DriverStationBackend.get_alliance() == wpilib.Alliance.RED
