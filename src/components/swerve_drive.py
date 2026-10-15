@@ -181,7 +181,7 @@ class SwerveDrive:  # (Sendable):
         Adds a vision measurement to the Kalman Filter. This will correct the odometry pose estimate while still accounting for measurement noise.
         """
         self.drivetrain.add_vision_measurement(
-            pose, utils.get_current_time_seconds(timestamp), std_devs
+            pose, timestamp, std_devs
         )
 
     def reset_heading(self) -> None:

@@ -6,10 +6,12 @@ from magicbot import MagicRobot
 from phoenix6 import CANBus, SignalLogger, units
 from phoenix6.hardware import TalonFX, TalonFXS
 from wpilib import CANPort, DriverStationBackend, DutyCycleEncoder, Gamepad
+from wpimath import Transform3d,Rotation3d
 
 import oi
 from components.indexer import Indexer
 from components.intake import Intake, Intake_Angle
+from components.odometry import Odometry
 from components.kicker import Kicker
 from components.leds import LEDStrip
 from components.shooter import Shooter
@@ -27,6 +29,8 @@ from lemonlib.util import (
     AlertType,
     curve,
 )
+from lemonlib import LemonCamera
+from robotpy_fields import Field,FieldId,get_field
 
 
 class MyRobot(MagicRobot):
@@ -34,6 +38,7 @@ class MyRobot(MagicRobot):
     ballistics: Ballistics
     shooter_controller: ShooterController
     drive_control: DriveControl
+    odometry: Odometry
 
     drivetrain: SwerveDrive
     intake: Intake
@@ -188,6 +193,20 @@ class MyRobot(MagicRobot):
                 "Low Bandwidth Mode is active! Tuning is disabled.", AlertType.INFO
             )
 
+        self.field_layout = FieldId.FRC_2026_REBUILT_WELDED
+        
+
+        self.rtc_front_right = Transform3d(
+            -0.279,
+            -0.222,
+            0.229,
+            Rotation3d(0.0, (-30 * math.pi) / 180.0 , (-45 * math.pi) / 180.0),
+        )
+
+        self.camera_front_right = LemonCamera(
+            "Front_Right", self.rtc_front_right, self.field_layout
+        )
+
         self.intake_voltage = tunables.add("intake_volt", 0.0)
 
     """
@@ -264,8 +283,8 @@ class MyRobot(MagicRobot):
             #     else 6
             # )
             if self.oi.intake_up():
-                # self.intake.set_arm_voltage(-10.0)
-                self.intake.set_arm_angle(Intake_Angle.STOWED)
+                self.intake.set_arm_voltage(-10.0)
+                # self.intake.set_arm_angle(Intake_Angle.STOWED)
             elif self.oi.intake_down():
-                # self.intake.set_arm_voltage(6.0)
-                self.intake.set_arm_angle(Intake_Angle.DOWN)
+                self.intake.set_arm_voltage(6.0)
+                # self.intake.set_arm_angle(Intake_Angle.DOWN)

@@ -157,10 +157,10 @@ class Intake:
     def execute(self) -> None:
         arm_angle = self.get_arm_angle()
 
-        if not self.arm_manual:
-            self.arm_voltage = self.arm_controller.calculate(
-                arm_angle, self.target_angle.value
-            )
+        # if not self.arm_manual:
+        #     self.arm_voltage = self.arm_controller.calculate(
+        #         arm_angle, self.target_angle.value
+        #     )
 
         if (arm_angle <= Intake_Angle.STOWED.value and self.arm_voltage < 0.0) or (
             arm_angle >= Intake_Angle.DOWN.value and self.arm_voltage > 0.0
