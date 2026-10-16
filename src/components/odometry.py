@@ -1,13 +1,14 @@
 import math
 
 from photonlibpy import PhotonPoseEstimator
-from robotpy_fields import Field,FieldId,FieldImage,get_field
-from wpilib import DriverStation, Field2d,DriverStationBackend,RobotBase
+from robotpy_fields import Field, FieldId, FieldImage, get_field
+from wpilib import DriverStation, Field2d, DriverStationBackend, RobotBase
 from wpimath import Pose2d, Pose3d, Rotation2d
 import telemetry
 
 from components.swerve_drive import SwerveDrive
 from lemonlib.vision import LemonCamera
+
 
 class Odometry:
     drivetrain: SwerveDrive
@@ -18,9 +19,7 @@ class Odometry:
     drivetrain: SwerveDrive
 
     def setup(self):
-        cameras = (
-            self.camera_front_right,
-        )
+        cameras = (self.camera_front_right,)
         self._camera_estimator_pairs = tuple(
             (cam, PhotonPoseEstimator(get_field(self.field_layout), cam.camera_to_bot))
             for cam in cameras
@@ -29,7 +28,6 @@ class Odometry:
         self.linear_baseline_std = 0.10  # meters
         self.angular_baseline_std = math.radians(10)
         self.angular_baseline_std_sim = math.radians(30)
-
 
         # Stale timestamp tracking per camera
         self._last_timestamps: list[float] = [0.0] * len(self._camera_estimator_pairs)
@@ -41,7 +39,9 @@ class Odometry:
     ) -> tuple[float, float, float]:
         """Compute standard deviations for a vision measurement."""
         angular_baseline = (
-            self.angular_baseline_std_sim if RobotBase.is_simulation() else self.angular_baseline_std
+            self.angular_baseline_std_sim
+            if RobotBase.is_simulation()
+            else self.angular_baseline_std
         )
         std_factor = (avg_dist**2) / tag_count
         std_xy = self.linear_baseline_std * std_factor
@@ -92,6 +92,4 @@ class Odometry:
 
                 std_devs = self._compute_std_devs(avg_dist, tag_count, is_gyro_fused)
 
-                self.drivetrain.addVisionPoseEstimate(twod_pose,ts,std_devs)
-                self.field.set_robot_pose(twod_pose)
-        telemetry.log("esitame", self.field)
+                self.drivetrain.addVisionPoseEstimate(twod_pose, ts, std_devs)

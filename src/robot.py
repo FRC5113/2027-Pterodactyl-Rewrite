@@ -5,32 +5,33 @@ import tunables
 from magicbot import MagicRobot
 from phoenix6 import CANBus, SignalLogger, units
 from phoenix6.hardware import TalonFX, TalonFXS
+from robotpy_fields import FieldId
 from wpilib import CANPort, DriverStationBackend, DutyCycleEncoder, Gamepad
-from wpimath import Transform3d,Rotation3d
+from wpimath import Rotation3d, Transform3d
 
 import oi
 from components.indexer import Indexer
-from components.intake import Intake, Intake_Angle
-from components.odometry import Odometry
+from components.intake import Intake
 from components.kicker import Kicker
 from components.leds import LEDStrip
+from components.odometry import Odometry
 from components.shooter import Shooter
 from components.simulation.intake_sim import IntakeSim
 from components.simulation.swerve_sim import SwerveSim
+from components.simulation.vision_sim import OdometrySim
 from components.swerve_drive import SwerveDrive
 from controllers.ballistics import Ballistics
 from controllers.drive_control import DriveControl
 from controllers.score_controller import ScoreController
 from controllers.shooter_controller import ShooterController
 from generated.tuner_constants import TunerConstants
+from lemonlib import LemonCamera
 from lemonlib.smart import SmartPreference, SmartProfile
 from lemonlib.util import (
     AlertManager,
     AlertType,
     curve,
 )
-from lemonlib import LemonCamera
-from robotpy_fields import Field,FieldId,get_field
 
 
 class MyRobot(MagicRobot):
@@ -194,13 +195,12 @@ class MyRobot(MagicRobot):
             )
 
         self.field_layout = FieldId.FRC_2026_REBUILT_WELDED
-        
 
         self.rtc_front_right = Transform3d(
             -0.279,
             -0.222,
             0.229,
-            Rotation3d(0.0, (-30 * math.pi) / 180.0 , (-45 * math.pi) / 180.0),
+            Rotation3d(0.0, (-30 * math.pi) / 180.0, (-45 * math.pi) / 180.0),
         )
 
         self.camera_front_right = LemonCamera(
@@ -226,9 +226,11 @@ class MyRobot(MagicRobot):
         )  # Has a notifier built in so does not need periodic called
 
         self.intake_sim = IntakeSim(self.intake)
+        self.odometry_sim = OdometrySim(self.odometry, self.drivetrain)
 
     def simulation_periodic(self) -> None:
         self.intake_sim.simulation_periodic()
+        self.odometry_sim.simulation_periodic()
 
     """
     PERIODIC
