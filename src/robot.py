@@ -217,6 +217,7 @@ class MyRobot(MagicRobot):
         self.secondary = Gamepad(1)
         # self.oi = oi.Twitch_OI()
         # self.oi = oi.DoubleOI(self.primary, self.secondary)
+        # self.oi = oi.NIDoubleOI(0, 1)
         self.oi = oi.SingleOI(self.primary)
 
     def simulation_init(self):

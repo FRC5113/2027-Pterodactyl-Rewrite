@@ -1,13 +1,11 @@
 import math
 
-from photonlibpy import PhotonPoseEstimator
-from robotpy_fields import Field, FieldId, FieldImage, get_field
-from wpilib import DriverStation, Field2d, DriverStationBackend, RobotBase
-from wpimath import Pose2d, Pose3d, Rotation2d
-import telemetry
+from robotpy_fields import FieldId, get_field
+from wpilib import DriverStationBackend, Field2d, RobotBase
 
 from components.swerve_drive import SwerveDrive
 from lemonlib.vision import LemonCamera
+from photonlibpy import PhotonPoseEstimator
 
 
 class Odometry:
@@ -16,7 +14,6 @@ class Odometry:
     camera_front_right: LemonCamera
 
     field_layout: FieldId
-    drivetrain: SwerveDrive
 
     def setup(self):
         cameras = (self.camera_front_right,)

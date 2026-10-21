@@ -1,5 +1,5 @@
 import tunables
-from wpilib import Gamepad
+from wpilib import Gamepad, NiDsPS5Controller, NiDsXboxController
 
 
 class OI_Base:
@@ -66,7 +66,7 @@ class DoubleOI(OI_Base):
         return self.driver.get_left_x()
 
     def drive_rotation(self) -> float:
-        return self.driver.get_right_x()
+        return -self.driver.get_right_x()
 
     def drive_limit_speed75(self) -> bool:
         return self.driver.get_right_trigger() > 0.8
@@ -183,3 +183,48 @@ class Twitch_OI(OI_Base):
 
     def unjam(self) -> bool:
         return False
+
+
+class NIDoubleOI(OI_Base):
+    def __init__(self, driver_port: int, operator_port: int):
+        self.driver = NiDsPS5Controller(driver_port)
+        self.operator = NiDsXboxController(operator_port)
+
+    def drive_forward(self) -> float:
+        return self.driver.get_left_y()
+
+    def drive_strafe(self) -> float:
+        return self.driver.get_left_x()
+
+    def drive_rotation(self) -> float:
+        return -self.driver.get_right_x()
+
+    def drive_limit_speed75(self) -> bool:
+        return self.driver.get_r2_axis() > 0.8
+
+    def drive_limit_speed50(self) -> bool:
+        return self.driver.get_l2_axis() > 0.8
+
+    def reset_gyro(self) -> bool:
+        return self.driver.get_square_button()
+
+    def intake(self) -> bool:
+        return self.operator.get_left_trigger_axis() > 0.8
+
+    def outtake(self) -> bool:
+        return self.operator.get_left_bumper_button()
+
+    def intake_up(self) -> bool:
+        return self.operator.get_x_button()
+
+    def intake_down(self) -> bool:
+        return self.operator.get_b_button()
+
+    def hard_shoot(self) -> bool:
+        return self.operator.get_a_button()
+
+    def auto_shoot(self) -> bool:
+        return self.operator.get_right_trigger_axis() > 0.8
+
+    def unjam(self) -> bool:
+        return self.operator.get_y_button()
