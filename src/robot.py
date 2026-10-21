@@ -2,7 +2,7 @@ import math
 
 import phoenix6
 import tunables
-from magicbot import MagicRobot
+from magicbot import AutonomousStateMachine, MagicRobot, feedback
 from phoenix6 import CANBus, SignalLogger, units
 from phoenix6.hardware import TalonFX, TalonFXS
 from robotpy_fields import FieldId
@@ -27,11 +27,7 @@ from controllers.shooter_controller import ShooterController
 from generated.tuner_constants import TunerConstants
 from lemonlib import LemonCamera
 from lemonlib.smart import SmartPreference, SmartProfile
-from lemonlib.util import (
-    AlertManager,
-    AlertType,
-    curve,
-)
+from lemonlib.util import AlertManager, AlertType, LEDController, curve
 
 
 class MyRobot(MagicRobot):
@@ -46,7 +42,7 @@ class MyRobot(MagicRobot):
     shooter: Shooter
     indexer: Indexer
     kicker: Kicker
-    leds: LEDStrip
+    led_strip: LEDStrip
 
     # Greatest speed that chassis should move (not greatest possible speed)
     top_speed = SmartPreference(4.7)
@@ -90,7 +86,7 @@ class MyRobot(MagicRobot):
             {
                 "kP": 7.0,
                 "kI": 0.0,
-                "kD": 0.1,
+                "kD": 0.0,
                 "kMaxV": 8.0,
                 "kMaxA": 40.0,
                 "kMinInput": -math.pi,
@@ -207,6 +203,9 @@ class MyRobot(MagicRobot):
             "Front_Right", self.rtc_front_right, self.field_layout
         )
 
+        self.led_length = 150
+        self.leds = LEDController(3, self.led_length)
+
         self.intake_voltage = tunables.add("intake_volt", 0.0)
 
     """
@@ -290,3 +289,14 @@ class MyRobot(MagicRobot):
             elif self.oi.intake_down():
                 self.intake.set_arm_voltage(6.0)
                 # self.intake.set_arm_angle(Intake_Angle.DOWN)
+
+    @feedback
+    def display_auto_state(self):
+        selected_auto = self._automodes.chooser.get_selected()
+        if isinstance(selected_auto, AutonomousStateMachine):
+            return (
+                selected_auto.current_state
+                if selected_auto.current_state != ""
+                else "No State Running"
+            )
+        return "No Auto Selected"

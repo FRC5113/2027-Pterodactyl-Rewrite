@@ -3,7 +3,7 @@ import math
 import telemetry
 from magicbot import will_reset_to
 from ntcore import NetworkTableInstance
-from phoenix6 import SignalLogger, hardware, swerve, units, utils
+from phoenix6 import SignalLogger, hardware, swerve, units
 from phoenix6.swerve import requests
 from wpilib import (
     Alliance,
@@ -180,9 +180,7 @@ class SwerveDrive:  # (Sendable):
         """
         Adds a vision measurement to the Kalman Filter. This will correct the odometry pose estimate while still accounting for measurement noise.
         """
-        self.drivetrain.add_vision_measurement(
-            pose, timestamp, std_devs
-        )
+        self.drivetrain.add_vision_measurement(pose, timestamp, std_devs)
 
     def reset_heading(self) -> None:
         """
