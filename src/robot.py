@@ -193,10 +193,17 @@ class MyRobot(MagicRobot):
         self.field_layout = FieldId.FRC_2026_REBUILT_WELDED
 
         self.rtc_front_right = Transform3d(
-            -0.279,
+            -0.26,
             -0.222,
-            0.229,
-            Rotation3d(0.0, (-30 * math.pi) / 180.0, (-45 * math.pi) / 180.0),
+            0.521,
+            Rotation3d(0.0, (-30 * math.pi) / 180.0, 0.0,
+        ))
+
+        self.rtc_side_left = Transform3d(
+            0.349,
+            -0.0254,
+            0.216,
+            Rotation3d(0.0, (-30 * math.pi) / 180.0, (90 * math.pi) / 180.0,
         )
 
         self.camera_front_right = LemonCamera(
