@@ -8,9 +8,9 @@ if constants.ODOMETRY:
     from components.odometry import Odometry
 from components.auto import AutoContext, AutoRunner
 from smartunits import (
-    meters_per_second, radians_per_second, volts,
-    Velocity, AngularVelocity,
+    meters_per_second, radians_per_second, volts, AngularVelocity,
 )
+from smartunits import LinearVelocity as Velocity
 import math
 from lemonlib.util import curve, AlertManager, AlertType
 from pathlib import Path
@@ -54,6 +54,8 @@ class MyRobot(wpilib.TimedRobot):
         # </Intake>
 
         # <Shooter>
+        if self.secondary.getStartButton():#TODO: Make sure button matches what Ryan expects. 
+            self.shot_controller.force_shoot()
         if self.secondary.getRightTriggerAxis() >= 0.8:
             self.shot_controller.shoot(self.odometry.get_target_distance())
         else:

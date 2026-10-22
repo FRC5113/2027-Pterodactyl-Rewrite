@@ -1,13 +1,13 @@
 import constants as constants
 from phoenix6 import swerve, hardware
 from phoenix6.swerve import requests
-from smartunits import Velocity, AngularVelocity, Time, Distance
-from smartunits.velocity import meters_per_second
+from smartunits import AngularVelocity, Time, Distance, meters_per_second
 from smartunits.angular_velocity import radians_per_second
 from smartunits.distance import meters
 from smartunits.time import seconds
 import wpimath
 import math
+from smartunits import LinearVelocity as Velocity
 class SwerveDrive:
     drivetrain: swerve.SwerveDrivetrain
     period = 0.02

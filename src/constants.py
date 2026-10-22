@@ -1,7 +1,8 @@
 from smartunits import (
-    Angle, Current, Distance, MomentOfInertia, Velocity, Voltage,
+    Angle, Current, Distance, MomentOfInertia, Voltage,
     amperes, inches, kilogram_square_meters, meters, meters_per_second, rotations, volts,
 )
+from smartunits import LinearVelocity as Velocity
 from phoenix6 import CANBus, configs, signals, swerve
 
 TUNING_ENABLED = False

@@ -5,7 +5,7 @@ from components.odometry import Odometry
 import json
 import time
 from lemonlib.util import AlertManager, AlertType
-from smartunits.velocity import meters_per_second
+from smartunits import meters_per_second
 from smartunits.angular_velocity import radians_per_second
 from smartunits.voltage import volts
 class AutoContext:

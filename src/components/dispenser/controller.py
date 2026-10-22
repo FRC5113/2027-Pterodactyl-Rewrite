@@ -1,17 +1,3 @@
-"""
-ALGORITHM:
-The shooter's pitch is mechanically fixed at SHOOTER_ANGLE - only volts (exit velocity) is adjustable.
-Take the average of minVolts and maxVolts to get workingVolts.
-Calculate where the ball will be, at SHOOTER_ANGLE, when it reaches horizontalDistance (undershooting,
-overshooting, or landing in the net) and when it reaches the back rim of the hoop (to check the backboard).
-If the ball falls short of HOOP_HEIGHT, set minVolts to workingVolts (need more power).
-If the ball is still at or above HOOP_HEIGHT when it reaches the back rim edge, it clangs off the backboard -
-treat this the same as overshooting: set maxVolts to workingVolts (need less power).
-If the ball goes over NET_HEIGHT, set maxVolts to workingVolts (need less power).
-Otherwise the ball lands cleanly between HOOP_HEIGHT and NET_HEIGHT without hitting the backboard - working
-value found, exit loop.
-"""
-
 import math
 import time
 HOOP_RADIUS = 1.0922  # meters = 42 inches
@@ -33,19 +19,25 @@ class Controller:
     MAX_VELOCITY = 60 #rotations/s
     should_shoot = False
     distance_from_target: Distance
+    self.force_shoot = False
     def __init__(self):
         self.indexer = Indexer()
         self.shooter = Shooter()
         self.distance_lookup = [1.597, 2.597, 3.597, 4.597]  # TODO Tune these values
         self.speed_lookup = [41.95, 45.8, 48.9, 53.0]  # TODO Tune these values
-
+        self.hard_velocity = 47.5
     def stop_shoot(self):
         self.should_shoot = False
+        self.force_shoot = False
     def start_shoot(self, distance: Distance):
         self.distance_from_target = distance
         self.should_shoot = True
+    def force_shoot(self):
+        self.force_shoot = True
     def execute(self):
-        if not self.should_shoot:
+        if self.force_shoot:
+            self.shooter.set_velocity(self.hard_velocity)
+        elif not self.should_shoot:
             self.shooter.set_velocity(
                 0.8 * self.MAX_VELOCITY
             )  # 0.8 is a made up number, tune
