@@ -52,6 +52,11 @@ class Indexer:
     def execute(self):
         if self.kick_on:
             self.left_kicker_motor.set_control(controls.VoltageOut(-12))
-            self.right_kicker_motor.set_control(controls.VoltageOut(-12))
+            self.right_kicker_motor.set_control(controls.VoltageOut(12))
+        else:
+            self.left_kicker_motor.set_control(controls.VoltageOut(0))
+            self.right_kicker_motor.set_control(controls.VoltageOut(0))
         if self.conv_on:
             self.conveyor_motor.set_control(controls.VoltageOut(-12))
+        else:
+            self.conveyor_motor.set_control(controls.VoltageOut(0))

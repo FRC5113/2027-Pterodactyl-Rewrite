@@ -33,7 +33,6 @@ class MyRobot(wpilib.TimedRobot):
     def teleop_init(self):
         self.primary = LemonInput(0)  # Gotta create on telop init so we know that driver station is
         self.secondary = LemonInput(1)  # connected to robot and to get most up to date info
-
     def teleop_periodic(self):
         self.odometry.execute() #prevent datalag
 
@@ -54,10 +53,10 @@ class MyRobot(wpilib.TimedRobot):
         # </Intake>
 
         # <Shooter>
-        if self.secondary.getStartButton():#TODO: Make sure button matches what Ryan expects. 
+        if self.secondary.getYButton():#TODO: Make sure button matches what Ryan expects. 
             self.shot_controller.force_shoot()
-        if self.secondary.getRightTriggerAxis() >= 0.8:
-            self.shot_controller.shoot(self.odometry.get_target_distance())
+        elif self.secondary.getRightTriggerAxis() >= 0.8:
+            self.shot_controller.start_shoot(self.odometry.get_target_distance())
         else:
             self.shot_controller.stop_shoot()
         # </Shooter>

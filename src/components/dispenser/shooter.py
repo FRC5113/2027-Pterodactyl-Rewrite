@@ -87,5 +87,5 @@ class Shooter:
 
     def execute(self):
         self.left_motor.set_control(
-            controls.VelocityVoltage(self.velocity).with_slot(0)
+            controls.VelocityVoltage(-self.velocity).with_slot(0)
         )

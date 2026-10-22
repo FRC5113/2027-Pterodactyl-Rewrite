@@ -19,24 +19,27 @@ class Controller:
     MAX_VELOCITY = 60 #rotations/s
     should_shoot = False
     distance_from_target: Distance
-    self.force_shoot = False
     def __init__(self):
         self.indexer = Indexer()
         self.shooter = Shooter()
         self.distance_lookup = [1.597, 2.597, 3.597, 4.597]  # TODO Tune these values
         self.speed_lookup = [41.95, 45.8, 48.9, 53.0]  # TODO Tune these values
-        self.hard_velocity = 47.5
+        self.hard_velocity = 475
+        self.should_force_shoot = False
     def stop_shoot(self):
         self.should_shoot = False
-        self.force_shoot = False
+        self.should_force_shoot = False
     def start_shoot(self, distance: Distance):
         self.distance_from_target = distance
         self.should_shoot = True
     def force_shoot(self):
-        self.force_shoot = True
+        self.should_force_shoot = True
     def execute(self):
-        if self.force_shoot:
+        if self.should_force_shoot:
             self.shooter.set_velocity(self.hard_velocity)
+            self.indexer.conveyor_on()
+            self.indexer.kicker_on()
+            
         elif not self.should_shoot:
             self.shooter.set_velocity(
                 0.8 * self.MAX_VELOCITY

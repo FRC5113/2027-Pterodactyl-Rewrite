@@ -45,7 +45,7 @@ class Intake:
 
         # left follows right
         self.arm_follower = controls.Follower(
-            self.right_motor.device_id, signals.MotorAlignmentValue.ALIGNED
+            self.right_motor.device_id, signals.MotorAlignmentValue.OPPOSED
         )
         self.left_motor.set_control(self.arm_follower)
 
