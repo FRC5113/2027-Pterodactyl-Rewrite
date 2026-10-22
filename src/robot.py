@@ -203,7 +203,7 @@ class MyRobot(MagicRobot):
             0.349,
             -0.0254,
             0.216,
-            Rotation3d(0.0, (-30 * math.pi) / 180.0, (90 * math.pi) / 180.0,
+            Rotation3d(0.0, (-30 * math.pi) / 180.0, (90 * math.pi) / 180.0),
         )
 
         self.camera_front_right = LemonCamera(
