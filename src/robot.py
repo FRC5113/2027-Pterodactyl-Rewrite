@@ -18,7 +18,10 @@ import math
 from lemonlib.util import curve, AlertManager, AlertType
 from pathlib import Path
 from wpimath import Pose2d, Rotation2d
+from wpiutil import Color8Bit
 from lemonlib.simulation import KrakenSim
+OFF_COLOR = Color8Bit(120, 120, 120)
+ON_COLOR = Color8Bit(0, 200, 0)
 class MyRobot(wpilib.TimedRobot):
     intake: Intake
     shot_controller: Controller
@@ -41,6 +44,13 @@ class MyRobot(wpilib.TimedRobot):
         for traj in sorted((Path(wpilib.get_deploy_directory()) / "choreo").glob("*.traj")):
             self.auto_chooser.add(traj.stem, str(traj))
         tunables.publish("Auto", self.auto_chooser)
+
+        # one bar per mechanism, each published under its own name; grows and turns green while it runs
+        self.mechs = {name: wpilib.Mechanism2d(3, 1) for name in ("Intake", "Indexer", "Shooter")}
+        self.mech_bars = {
+            name: mech.get_root(name, 0.25, 0.5).append_ligament(name, 0.1, 0, 20, OFF_COLOR)
+            for name, mech in self.mechs.items()
+        }
 
         self.field = wpilib.Field2d()
         self.actual_poses = []
@@ -82,6 +92,17 @@ class MyRobot(wpilib.TimedRobot):
             self.sim_table.log(f"{name}_volts", float(motor.sim_state.motor_voltage))
         shooter = self.shot_controller.shooter.left_motor
         self.sim_table.log("Shooter/velocity_rps", abs(shooter.get_velocity().value_as_double))
+        shooter_level = abs(shooter.get_velocity().value_as_double) / self.shot_controller.MAX_VELOCITY
+        levels = {
+            "Intake": abs(self.intake.spin_motor.sim_state.motor_voltage) / 12,
+            "Indexer": abs(self.shot_controller.indexer.conveyor_motor.sim_state.motor_voltage) / 12,
+            "Shooter": shooter_level,
+        }
+        for name, level in levels.items():
+            self.mech_bars[name].set_length(max(0.1, 2.5 * min(level, 1.0)))
+            self.mech_bars[name].set_color(ON_COLOR if level > 0.2 else OFF_COLOR)
+        for name, mech in self.mechs.items():
+            self.sim_table.log(f"Mechanisms/{name}", mech)
         self.sim_table.log("Shooter/shooting", bool(self.shot_controller.should_shoot or self.shot_controller.should_force_shoot))
     def teleop_init(self):
         self.primary = LemonInput(0)  # Gotta create on telop init so we know that driver station is
@@ -163,6 +184,12 @@ class MyRobot(wpilib.TimedRobot):
         self.primary = LemonInput(0)
         self.secondary = LemonInput(1)
     def autonomous_init(self):
+        # clear anything left on from a previous run
+        self.intake.set_voltage(volts.of(0.0))
+        self.intake.set_arm_voltage(volts.of(0.0))
+        self.shot_controller.stop_shoot()
+        self.shot_controller.indexer.conveyor_off()
+        self.shot_controller.indexer.kicker_off()
         self.ctx = AutoContext(self.swerve, self.intake, self.shot_controller, self.odometry)
         try:
             selected = self.auto_chooser.get_selected()

@@ -33,16 +33,22 @@ callbacks = {#the python type system wont allow type hints in lambdas, because i
 class AutoRunner():
     KP_TRANSLATION = 4.0  # (m/s) per meter of position error, TODO tune
     KP_HEADING = 4.0  # (rad/s) per radian of heading error, TODO tune
+    MAX_CORRECTION = 1.5  # m/s, caps the position correction so a big error (e.g. at the start) can't swing the robot across the field
+    MAX_STEP_S = 0.04  # the trajectory clock advances at most this much per loop, so a stalled loop can't make the plan run ahead of the robot
     def __init__(self, file_path: str):
         self.file_path = file_path
         self.first_iteration = True
     def execute(self, ctx: AutoContext):
         if self.first_iteration:
-            self.start_time_s = time.time_ns() / 1e9
+            self.last_time_s = time.time_ns() / 1e9
+            self.dt = 0.0
             with open(self.file_path, "r") as file:
                 self.contents = json.loads(file.read())
             self.first_iteration = False
-        dt = time.time_ns() / 1e9 - self.start_time_s
+        now_s = time.time_ns() / 1e9
+        self.dt += min(now_s - self.last_time_s, self.MAX_STEP_S)
+        self.last_time_s = now_s
+        dt = self.dt
         try:
             samples = self.contents["trajectory"]["samples"]
         except:
@@ -61,8 +67,14 @@ class AutoRunner():
                     break
             # trajectory velocity + proportional correction toward the trajectory pose
             pose = ctx.sd.get_pose()
-            vx = ref["vx"] + self.KP_TRANSLATION * (ref["x"] - pose.x)
-            vy = ref["vy"] + self.KP_TRANSLATION * (ref["y"] - pose.y)
+            fx = self.KP_TRANSLATION * (ref["x"] - pose.x)
+            fy = self.KP_TRANSLATION * (ref["y"] - pose.y)
+            correction = math.hypot(fx, fy)
+            if correction > self.MAX_CORRECTION:
+                fx *= self.MAX_CORRECTION / correction
+                fy *= self.MAX_CORRECTION / correction
+            vx = ref["vx"] + fx
+            vy = ref["vy"] + fy
             omega = ref["omega"] + self.KP_HEADING * math.remainder(ref["heading"] - pose.rotation().radians(), math.tau)
             ctx.sd.drive(meters_per_second.of(vx), meters_per_second.of(vy), radians_per_second.of(omega), True)
         EVENT_TOLERANCE = 0.03 #30 ms
