@@ -1,4 +1,7 @@
 import wpilib
+import json
+import telemetry
+import tunables
 import constants as constants
 from components.intake import Intake
 from lemonlib import LemonInput
@@ -14,6 +17,8 @@ from smartunits import LinearVelocity as Velocity
 import math
 from lemonlib.util import curve, AlertManager, AlertType
 from pathlib import Path
+from wpimath import Pose2d, Rotation2d
+from lemonlib.simulation import KrakenSim
 class MyRobot(wpilib.TimedRobot):
     intake: Intake
     shot_controller: Controller
@@ -30,6 +35,54 @@ class MyRobot(wpilib.TimedRobot):
         self.swerve = SwerveDrive()
         self.odometry = Odometry(self.swerve)
         self.DEADBAND = 0.1 #arbitrary
+
+        # auto selector: every trajectory in deploy/choreo, published as "Auto"
+        self.auto_chooser = tunables.Selectable()
+        for traj in sorted((Path(wpilib.get_deploy_directory()) / "choreo").glob("*.traj")):
+            self.auto_chooser.add(traj.stem, str(traj))
+        tunables.publish("Auto", self.auto_chooser)
+
+        self.field = wpilib.Field2d()
+        self.actual_poses = []
+        self.loop_count = 0
+        self.field_table = telemetry.get_table("Field")
+        self.sim_table = telemetry.get_table("Sim")
+        if wpilib.RobotBase.is_simulation():
+            # free-spinning rotor sims so current limits don't clamp the voltage readouts
+            self.mech_sims = {
+                name: KrakenSim(motor, 0.01 if name == "Shooter/left" else 0.001, 1.0)
+                for name, motor in self._sim_motors().items()
+            }
+
+    def _sim_motors(self):
+        indexer = self.shot_controller.indexer
+        return {
+            "Intake/spin": self.intake.spin_motor,
+            "Intake/arm": self.intake.right_motor,
+            "Indexer/left_kicker": indexer.left_kicker_motor,
+            "Indexer/right_kicker": indexer.right_kicker_motor,
+            "Indexer/conveyor": indexer.conveyor_motor,
+            "Shooter/left": self.shot_controller.shooter.left_motor,
+        }
+
+    def robot_periodic(self):
+        pose = self.swerve.get_pose()
+        self.field.set_robot_pose(pose)
+        if self.is_autonomous_enabled() and self.loop_count % 3 == 0:  # breadcrumb every 60 ms
+            self.actual_poses = (self.actual_poses + [pose])[-85:]
+            self.field.get_object("Actual").set_poses(self.actual_poses)
+        self.loop_count += 1
+        self.field_table.log("Field", self.field)
+
+    def simulation_periodic(self):
+        self.swerve.sim_update(0.02, wpilib.RobotController.get_battery_voltage())
+        for mech_sim in self.mech_sims.values():
+            mech_sim.update(0.02)
+        for name, motor in self._sim_motors().items():
+            self.sim_table.log(f"{name}_volts", float(motor.sim_state.motor_voltage))
+        shooter = self.shot_controller.shooter.left_motor
+        self.sim_table.log("Shooter/velocity_rps", abs(shooter.get_velocity().value_as_double))
+        self.sim_table.log("Shooter/shooting", bool(self.shot_controller.should_shoot or self.shot_controller.should_force_shoot))
     def teleop_init(self):
         self.primary = LemonInput(0)  # Gotta create on telop init so we know that driver station is
         self.secondary = LemonInput(1)  # connected to robot and to get most up to date info
@@ -112,11 +165,21 @@ class MyRobot(wpilib.TimedRobot):
     def autonomous_init(self):
         self.ctx = AutoContext(self.swerve, self.intake, self.shot_controller, self.odometry)
         try:
-            self.routine1 = AutoRunner("./py/deploy/choreo/BlueLeftIntakeShoot.traj")
-        except:
-            AlertManager.instant_alert("file not found", AlertType.ERROR)
+            selected = self.auto_chooser.get_selected()
+            if selected is None:
+                raise ValueError("no auto selected")
+            self.routine1 = AutoRunner(selected)
+            with open(selected, "r") as file:
+                samples = json.loads(file.read())["trajectory"]["samples"]
+            poses = [Pose2d(row["x"], row["y"], Rotation2d(row["heading"])) for row in samples]
+            self.field.get_object("Planned").set_poses(poses[::2][:85])
+            self.actual_poses = []
+            self.field.get_object("Actual").set_poses([])
+            self.swerve.reset_pose(poses[0])
+        except Exception as e:
+            self.routine1 = None
+            AlertManager.instant_alert(f"auto load failed: {e}", AlertType.ERROR)
     def autonomous_periodic(self):
-        files = [item.name for item in Path("./py/deploy/").iterdir()]
-        AlertManager.instant_alert(f"hey we are running auto {files}", AlertType.INFO, timeout=60)
-        self.routine1.execute(self.ctx)
+        if self.routine1 is not None:
+            self.routine1.execute(self.ctx)
         self.ctx.execute()

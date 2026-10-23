@@ -68,6 +68,10 @@ class SwerveDrive:
         self.drivetrain.add_vision_measurement(pose_info, time.in_unit(seconds), stddevs)
     def get_distance_from_pose(self, pose: wpimath.Pose2d) -> Distance:
         return meters.of(pose.translation().distance(self.get_pose().translation()))
+    def reset_pose(self, pose: wpimath.Pose2d) -> None:
+        self.drivetrain.reset_pose(pose)
+    def sim_update(self, dt: float, battery_voltage: float) -> None:
+        self.drivetrain.update_sim_state(dt, battery_voltage)
     def reset_heading(self) -> None:
         self.drivetrain.seed_field_centric(wpimath.Rotation2d(math.pi))
 
