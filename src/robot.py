@@ -18,7 +18,8 @@ from components.odometry import Odometry
 from components.shooter import Shooter
 from components.simulation.intake_sim import IntakeSim
 from components.simulation.swerve_sim import SwerveSim
-from components.simulation.vision_sim import OdometrySim
+
+# from components.simulation.vision_sim import OdometrySim
 from components.swerve_drive import SwerveDrive
 from controllers.ballistics import Ballistics
 from controllers.drive_control import DriveControl
@@ -84,7 +85,7 @@ class MyRobot(MagicRobot):
         self.rotation_profile = SmartProfile(
             "rotation",
             {
-                "kP": 7.0,
+                "kP": 3.0,
                 "kI": 0.0,
                 "kD": 0.0,
                 "kMaxV": 8.0,
@@ -196,8 +197,12 @@ class MyRobot(MagicRobot):
             -0.26,
             -0.222,
             0.521,
-            Rotation3d(0.0, (-30 * math.pi) / 180.0, 0.0,
-        ))
+            Rotation3d(
+                0.0,
+                (-30 * math.pi) / 180.0,
+                0.0,
+            ),
+        )
 
         self.rtc_side_left = Transform3d(
             0.349,
@@ -233,17 +238,30 @@ class MyRobot(MagicRobot):
         )  # Has a notifier built in so does not need periodic called
 
         self.intake_sim = IntakeSim(self.intake)
-        self.odometry_sim = OdometrySim(self.odometry, self.drivetrain)
+        # self.odometry_sim = OdometrySim(self.odometry, self.drivetrain)
 
     def simulation_periodic(self) -> None:
         self.intake_sim.simulation_periodic()
-        self.odometry_sim.simulation_periodic()
+        # self.odometry_sim.simulation_periodic()
 
     """
     PERIODIC
     """
 
     def teleop_periodic(self) -> None:
+        """
+        SHOOTER
+        """
+        with self.consume_exceptions():
+            shoot_mult = 1.0
+            if self.oi.hard_shoot():
+                self.shooter_controller.request_shot(47.5)
+            elif self.oi.auto_shoot():
+                self.score_controller.request_score()
+                shoot_mult = 0.2
+            elif self.oi.unjam():
+                self.shooter.set_voltage(-8.0)
+                self.kicker.set_voltage(-8.0)
         """
         SWERVE
         """
@@ -259,24 +277,21 @@ class MyRobot(MagicRobot):
                 mult = 1.0
 
             self.drive_control.request_drive_field(
-                self.sammi_curve(self.oi.drive_forward()) * self.top_speed * mult,
-                self.sammi_curve(self.oi.drive_strafe()) * self.top_speed * mult,
-                self.sammi_curve(self.oi.drive_rotation()) * self.top_omega * mult,
+                self.sammi_curve(self.oi.drive_forward())
+                * self.top_speed
+                * mult
+                * shoot_mult,
+                self.sammi_curve(self.oi.drive_strafe())
+                * self.top_speed
+                * mult
+                * shoot_mult,
+                self.sammi_curve(self.oi.drive_rotation())
+                * self.top_omega
+                * mult
+                * shoot_mult,
             )
             if self.oi.reset_gyro():
                 self.drivetrain.reset_heading()
-
-        """
-        SHOOTER
-        """
-        with self.consume_exceptions():
-            if self.oi.hard_shoot():
-                self.shooter_controller.request_shot(47.5)
-            elif self.oi.auto_shoot():
-                self.score_controller.request_score()
-            elif self.oi.unjam():
-                self.shooter.set_voltage(-8.0)
-                self.kicker.set_voltage(-8.0)
 
         """
         INTAKE

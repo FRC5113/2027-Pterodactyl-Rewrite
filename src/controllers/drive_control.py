@@ -40,7 +40,7 @@ class DriveControl(StateMachine):
 
         heading_gains = self.rotation_profile.gains
         heading_gains["kI"] = (
-            1e-15  # theres a weird bug where it cant be zero but kI gain sucks sooooo
+            1e-9  # theres a weird bug where it cant be zero but kI gain sucks sooooo
         )
         self.point_control = swerve.requests.FieldCentricFacingAngle().with_heading_pid(
             heading_gains["kP"], heading_gains["kI"], heading_gains["kP"]

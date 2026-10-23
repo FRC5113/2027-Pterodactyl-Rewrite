@@ -1,7 +1,7 @@
 import math
 
 from robotpy_fields import FieldId, get_field
-from wpilib import DriverStationBackend, Field2d, RobotBase
+from wpilib import Field2d, RobotBase
 
 from components.swerve_drive import SwerveDrive
 from lemonlib.vision import LemonCamera
@@ -50,8 +50,6 @@ class Odometry:
         return (std_xy, std_xy, std_rot)
 
     def execute(self):
-        disabled = DriverStationBackend.is_disabled()
-
         for cam_idx, (cam, pose_est) in enumerate(self._camera_estimator_pairs):
             cam.update()
 
@@ -60,19 +58,13 @@ class Odometry:
                 if not targets:
                     continue
 
-                best_target = res.getBestTarget()
-                if best_target and best_target.poseAmbiguity > 0.2:
-                    continue
-
                 # Try multi-tag estimation first (most accurate)
                 pupdate = pose_est.estimateCoprocMultiTagPose(res)
 
                 if pupdate is None:
-                    pupdate = pose_est.estimateCoprocMultiTagPose(res)
+                    pupdate = pose_est.estimateLowestAmbiguityPose(res)
                     if pupdate is None:
                         continue
-
-                is_gyro_fused = False
 
                 pose3d = pupdate.estimatedPose
                 twod_pose = pose3d.to_pose2d()
@@ -84,9 +76,7 @@ class Odometry:
                     t.getBestCameraToTarget().translation().norm() for t in targets
                 )
                 avg_dist = total_dist / tag_count
-                if avg_dist > 2.0 and not disabled:
-                    continue
 
-                std_devs = self._compute_std_devs(avg_dist, tag_count, is_gyro_fused)
+                std_devs = self._compute_std_devs(avg_dist, tag_count, False)
 
                 self.drivetrain.addVisionPoseEstimate(twod_pose, ts, std_devs)
