@@ -10,7 +10,9 @@ from smartunits.angle import radians, degrees
 from smartunits import Distance
 from smartunits.distance import meters
 from smartunits.time import seconds
-
+from wpimath import Transform3d, Rotation3d
+import math
+from lemonlib.vision import LemonCamera
 RED_HUB_TAGS = (4, 10)
 BLUE_HUB_TAGS = (20, 26)
 if constants.ODOMETRY:
@@ -26,63 +28,28 @@ if constants.ODOMETRY:
         drive: SwerveDrive
         def __init__(self, drive: SwerveDrive):
             self.drive = drive
-            self.field_layout = get_field(FIELD_ID)
-            ox = 0.298
-            oy = 0.298
-            rtc_front_left = wpimath.Transform3d(
-                -0.279,
-                0.222,
-                0.229,
-                wpimath.Rotation3d(0.0, degrees.of(-30).in_unit(radians), degrees.of(45).in_unit(radians)),
-            )
-            rtc_front_right = wpimath.Transform3d(
-                -0.279,
+            self.field_layout = get_field(FIELD_ID)            
+            self.rtc_front_right = Transform3d(
+                -0.26,
                 -0.222,
-                0.229,
-                wpimath.Rotation3d(0.0, degrees.of(-30).in_unit(radians), degrees.of(-45).in_unit(radians)),
-            )
-            rtc_back_left = wpimath.Transform3d(
-                -ox,
-                oy,
-                0.21,
-                wpimath.Rotation3d(0.0, degrees.of(-10).in_unit(radians), degrees.of(135).in_unit(radians)),
-            )
-            rtc_back_right = wpimath.Transform3d(
-                -ox,
-                -oy,
-                0.21,
-                wpimath.Rotation3d(0.0, degrees.of(-10).in_unit(radians), degrees.of(-135).in_unit(radians)),
-            )
-            rtc_mid = wpimath.Transform3d(
-                -0.241,
-                0.0,
-                0.229,
-                wpimath.Rotation3d(0.0, degrees.of(-20).in_unit(radians),0.0)
+                0.521,
+                Rotation3d(0.0, (-30 * math.pi) / 180.0, 0.0,
+            ))
 
+            self.rtc_side_left = Transform3d(
+                0.349,
+                -0.0254,
+                0.216,
+                Rotation3d(0.0, (-30 * math.pi) / 180.0, (90 * math.pi) / 180.0),
             )
 
-            self.camera_front_left = vision.LemonCamera(
-                "Front_Left",  rtc_front_left, FIELD_ID
+            self.camera_front_right = LemonCamera(
+                "Front_Right", self.rtc_front_right, FieldId.FRC_2026_REBUILT_WELDED
             )
-            self.camera_front_right = vision.LemonCamera(
-                "Front_Right",  rtc_front_right, FIELD_ID
-            )
-
-            self.camera_back_left = vision.LemonCamera(
-                "Back_Left",  rtc_back_left, FIELD_ID
-            )
-            self.camera_back_right = vision.LemonCamera(
-                "Back_Right",  rtc_back_right, FIELD_ID
-            )
-
-            self.camera_middle = vision.LemonCamera(
-                "Middle", rtc_mid, FIELD_ID
-            )
-
             cameras = (
-                self.camera_front_left,
+                #self.camera_front_left,
                 self.camera_front_right,
-                self.camera_middle,
+                #self.camera_middle,
                 # self.camera_back_left,
                 # self.camera_back_right,
             )

@@ -6,6 +6,7 @@ from smartunits import LinearVelocity as Velocity
 from phoenix6 import CANBus, configs, signals, swerve
 
 TUNING_ENABLED = False
+SIM = False
 """Photonliby not ready yet"""
 ODOMETRY = True
 
@@ -22,9 +23,9 @@ class TunerConstants:
     _steer_gains = (
         configs.Slot0Configs()
         # voltage
-        .with_k_p(90)
+        .with_k_p(150)
         .with_k_i(0.0)
-        .with_k_d(1)
+        .with_k_d(2)
         .with_k_s(0.12)
         .with_k_v(2.582)
         .with_k_a(0.0)

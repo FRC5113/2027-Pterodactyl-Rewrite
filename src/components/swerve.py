@@ -8,6 +8,7 @@ from smartunits.time import seconds
 import wpimath
 import math
 from smartunits import LinearVelocity as Velocity
+from wpilib import MatchState, Alliance
 class SwerveDrive:
     drivetrain: swerve.SwerveDrivetrain
     period = 0.02
@@ -73,7 +74,10 @@ class SwerveDrive:
     def sim_update(self, dt: float, battery_voltage: float) -> None:
         self.drivetrain.update_sim_state(dt, battery_voltage)
     def reset_heading(self) -> None:
-        self.drivetrain.seed_field_centric(wpimath.Rotation2d(math.pi))
+        if MatchState.get_alliance() == Alliance.RED:
+            self.drivetrain.seed_field_centric()
+        else:
+            self.drivetrain.seed_field_centric(wpimath.Rotation2d(math.pi))
 
     def execute(self):
         self.drivetrain.set_control(self.pending_request)

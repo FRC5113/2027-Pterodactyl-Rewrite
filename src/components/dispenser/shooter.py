@@ -42,7 +42,7 @@ class Shooter:
         config.feedback = (
             configs.FeedbackConfigs()
             .with_feedback_sensor_source(signals.FeedbackSensorSourceValue.ROTOR_SENSOR)
-            .with_sensor_to_mechanism_ratio(1.0)
+            .with_sensor_to_mechanism_ratio(1.6)
         )
 
         config.current_limits.stator_current_limit = amps.of(120.0)

@@ -19,7 +19,8 @@ from lemonlib.util import curve, AlertManager, AlertType
 from pathlib import Path
 from wpimath import Pose2d, Rotation2d
 from wpiutil import Color8Bit
-from lemonlib.simulation import KrakenSim
+if constants.SIM:
+    from lemonlib.simulation import KrakenSim
 OFF_COLOR = Color8Bit(120, 120, 120)
 ON_COLOR = Color8Bit(0, 200, 0)
 class MyRobot(wpilib.TimedRobot):
@@ -31,7 +32,7 @@ class MyRobot(wpilib.TimedRobot):
     def __init__(self):
         super().__init__()
         self.MAX_LINEAR_VELOCITY : Velocity = meters_per_second.of(3)
-        self.MAX_ANGULAR_VELOCITY : AngularVelocity = radians_per_second.of(math.pi)
+        self.MAX_ANGULAR_VELOCITY : AngularVelocity = radians_per_second.of(6)
 
         self.intake = Intake()
         self.shot_controller = Controller()
@@ -41,23 +42,26 @@ class MyRobot(wpilib.TimedRobot):
 
         # auto selector: every trajectory in deploy/choreo, published as "Auto"
         self.auto_chooser = tunables.Selectable()
-        for traj in sorted((Path(wpilib.get_deploy_directory()) / "choreo").glob("*.traj")):
-            self.auto_chooser.add(traj.stem, str(traj))
+        for i, traj in enumerate(sorted((Path(wpilib.get_deploy_directory()) / "choreo").glob("*.traj"))):
+            if i == 0:
+                self.auto_chooser.add_default(traj.stem, str(traj))
+            else:
+                self.auto_chooser.add(traj.stem, str(traj))
         tunables.publish("Auto", self.auto_chooser)
-
-        # one bar per mechanism, each published under its own name; grows and turns green while it runs
-        self.mechs = {name: wpilib.Mechanism2d(3, 1) for name in ("Intake", "Indexer", "Shooter")}
-        self.mech_bars = {
-            name: mech.get_root(name, 0.25, 0.5).append_ligament(name, 0.1, 0, 20, OFF_COLOR)
-            for name, mech in self.mechs.items()
-        }
-
         self.field = wpilib.Field2d()
-        self.actual_poses = []
         self.loop_count = 0
-        self.field_table = telemetry.get_table("Field")
-        self.sim_table = telemetry.get_table("Sim")
-        if wpilib.RobotBase.is_simulation():
+        if constants.SIM:
+            # one bar per mechanism, each published under its own name; grows and turns green while it runs
+            self.mechs = {name: wpilib.Mechanism2d(3, 1) for name in ("Intake", "Indexer", "Shooter")}
+            self.mech_bars = {
+                name: mech.get_root(name, 0.25, 0.5).append_ligament(name, 0.1, 0, 20, OFF_COLOR)
+                for name, mech in self.mechs.items()
+            }
+
+            self.actual_poses = []
+            self.field_table = telemetry.get_table("Field")
+            self.sim_table = telemetry.get_table("Sim")
+        if wpilib.RobotBase.is_simulation() and constants.SIM:
             # free-spinning rotor sims so current limits don't clamp the voltage readouts
             self.mech_sims = {
                 name: KrakenSim(motor, 0.01 if name == "Shooter/left" else 0.001, 1.0)
@@ -82,7 +86,8 @@ class MyRobot(wpilib.TimedRobot):
             self.actual_poses = (self.actual_poses + [pose])[-85:]
             self.field.get_object("Actual").set_poses(self.actual_poses)
         self.loop_count += 1
-        self.field_table.log("Field", self.field)
+        if constants.SIM:
+            self.field_table.log("Field", self.field)
 
     def simulation_periodic(self):
         self.swerve.sim_update(0.02, wpilib.RobotController.get_battery_voltage())
@@ -107,6 +112,8 @@ class MyRobot(wpilib.TimedRobot):
     def teleop_init(self):
         self.primary = LemonInput(0)  # Gotta create on telop init so we know that driver station is
         self.secondary = LemonInput(1)  # connected to robot and to get most up to date info
+    def robot_init(self):
+        self.swerve.reset_heading()
     def teleop_periodic(self):
         self.odometry.execute() #prevent datalag
 
@@ -127,7 +134,7 @@ class MyRobot(wpilib.TimedRobot):
         # </Intake>
 
         # <Shooter>
-        if self.secondary.getYButton():#TODO: Make sure button matches what Ryan expects. 
+        if self.secondary.getAButton():#TODO: Make sure button matches what Ryan expects. 
             self.shot_controller.force_shoot()
         elif self.secondary.getRightTriggerAxis() >= 0.8:
             self.shot_controller.start_shoot(self.odometry.get_target_distance())
@@ -142,15 +149,21 @@ class MyRobot(wpilib.TimedRobot):
             deadband=0.1,
             max_mag=1.0
         )
-
+        SCALE_FACTOR = 1.0
+        if self.primary.getRightTriggerAxis() >= 0.8 and self.primary.getLeftTriggerAxis() >= 0.8:
+            SCALE_FACTOR = 0.25
+        elif self.primary.getRightTriggerAxis() >= 0.8:
+            SCALE_FACTOR = 0.5
+        elif self.primary.getLeftTriggerAxis() >= 0.8:
+            SCALE_FACTOR == 0.75
         # Scale dimensionless joystick inputs by the maximum speeds.
-        vx = meters_per_second.of(
-            self.curve(self.primary.getLeftY())
+        vx = -meters_per_second.of(
+            self.curve(self.primary.getLeftY()) * SCALE_FACTOR
             * self.MAX_LINEAR_VELOCITY.into(meters_per_second)
         ).into(meters_per_second)
 
-        vy = meters_per_second.of(
-            self.curve(self.primary.getLeftX())
+        vy = -meters_per_second.of(
+            self.curve(self.primary.getLeftX()) * SCALE_FACTOR
             * self.MAX_LINEAR_VELOCITY.into(meters_per_second)
         ).into(meters_per_second)
 

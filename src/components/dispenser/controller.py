@@ -24,7 +24,7 @@ class Controller:
         self.shooter = Shooter()
         self.distance_lookup = [1.597, 2.597, 3.597, 4.597]  # TODO Tune these values
         self.speed_lookup = [41.95, 45.8, 48.9, 53.0]  # TODO Tune these values
-        self.hard_velocity = 475
+        self.hard_velocity = 47.5 * 1.1
         self.should_force_shoot = False
     def stop_shoot(self):
         self.should_shoot = False
@@ -63,9 +63,11 @@ class Controller:
                         y = (low - real) / (low - high)
                         velocity = self.speed_lookup[i] * x + self.speed_lookup[i + 1] * y
 
-            self.shooter.set_velocity(velocity)
-            self.indexer.kicker_on()
-            self.indexer.conveyor_on()
+            self.shooter.set_velocity(velocity * 10)#idk what the *10 is needed, it worked for force shoot and improved accruacy a lot so....
+            if self.shooter.left_motor.get_velocity().is_near(47.5, 4.75) or self.shooter.right_motor.get_velocity().is_near(47.5, 4.75):
+                    
+                self.indexer.kicker_on()
+                self.indexer.conveyor_on()
 
         self.indexer.execute()
         self.shooter.execute()
