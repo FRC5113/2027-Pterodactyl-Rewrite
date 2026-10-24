@@ -6,7 +6,7 @@ from smartunits import LinearVelocity as Velocity
 from phoenix6 import CANBus, configs, signals, swerve
 
 TUNING_ENABLED = False
-SIM = False
+SIM = True
 """Photonliby not ready yet"""
 ODOMETRY = True
 

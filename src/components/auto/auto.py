@@ -24,10 +24,14 @@ class AutoContext:
         self.it.execute()
         self.sc.execute()
         self.sd.execute()
+def shoot_delay(ctx: AutoContext):
+    start = time.time_ns()
+    while time.time_ns() - start < 3.0e9:
+        ctx.sc.force_shoot()
 callbacks = {#the python type system wont allow type hints in lambdas, because it is bad.
-    "IntakeOn": lambda ctx: ctx.it.set_voltage(volts.of(12)),
-    "IntakeOff": lambda ctx: ctx.it.set_voltage(volts.of(0)),
-    "Shoot": lambda ctx: ctx.sc.start_shoot(ctx.od.get_target_distance())
+    "IntakeOn": lambda ctx: ctx.it.set_voltage(volts.of(12.0)),
+    "IntakeOff": lambda ctx: ctx.it.set_voltage(volts.of(0.0)),
+    "Shoot": lambda ctx: shoot_delay(ctx)
 }
 
 class AutoRunner():

@@ -1,4 +1,12 @@
 {
-  "NTProvider": {"types": {"\/DriverStation": "DriverStation"}},
-  "NetworkTables Info": {"visible": true}
+  "HALProvider": {"Other Devices": {"window": {"visible": false}}},
+  "NTProvider": {"types": {
+    "\/DriverStation": "DriverStation",
+    "\/Telemetry\/Field\/Field": "Field2d",
+    "\/Telemetry\/Sim\/Mechanisms\/Indexer": "Mechanism2d",
+    "\/Telemetry\/Sim\/Mechanisms\/Intake": "Mechanism2d",
+    "\/Telemetry\/Sim\/Mechanisms\/Shooter": "Mechanism2d",
+    "\/Tunables\/Auto": "Selectable"
+  }},
+  "NetworkTables View": {"visible": false}
 }
