@@ -75,9 +75,9 @@ class SwerveDrive:
         self.drivetrain.update_sim_state(dt, battery_voltage)
     def reset_heading(self) -> None:
         if MatchState.get_alliance() == Alliance.RED:
-            self.drivetrain.seed_field_centric()
+            self.drivetrain.seed_field_centric(wpimath.Rotation2d.from_degrees(0))
         else:
-            self.drivetrain.seed_field_centric(wpimath.Rotation2d(math.pi))
+            self.drivetrain.seed_field_centric(wpimath.Rotation2d.from_degrees(180))
 
     def execute(self):
         self.drivetrain.set_control(self.pending_request)
