@@ -28,8 +28,13 @@ def shoot_delay(ctx: AutoContext):
     start = time.time_ns()
     while time.time_ns() - start < 3.0e9:
         ctx.sc.force_shoot()
+def intake_stuff(ctx: AutoContext):
+    start = time.time_ns()
+    while time.time_ns() - start < 1.0e9:
+        ctx.it.set_arm_voltage(volts.of(6.0))
+    ctx.it.set_arm_voltage(volts.of(12.0))
 callbacks = {#the python type system wont allow type hints in lambdas, because it is bad.
-    "IntakeOn": lambda ctx: ctx.it.set_voltage(volts.of(12.0)),
+    "IntakeOn": lambda ctx: intake_stuff(ctx),
     "IntakeOff": lambda ctx: ctx.it.set_voltage(volts.of(0.0)),
     "Shoot": lambda ctx: shoot_delay(ctx)
 }
