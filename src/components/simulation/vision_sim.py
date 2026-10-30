@@ -6,6 +6,10 @@ from lemonlib.simulation import LemonCameraSim, LemonVisionSim
 
 
 class OdometrySim:
+    """
+    robot no likey and idrc why, last time bot is being used just comment me out when deploy
+    """
+
     def __init__(self, odometry: Odometry, swerve: SwerveDrive):
         self._get_pose = swerve.get_pose
 

@@ -129,7 +129,7 @@ class Shooter:
         return self.left_motor.get_throttle() * RobotController.get_battery_voltage()
 
     @feedback
-    def get_supply_amps(self):
+    def get_supply_amps(self) -> units.ampere:
         return self.leader_motor_supply_amps.value
 
     """

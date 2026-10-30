@@ -14,17 +14,12 @@ class Ballistics:
 
     def setup(self):
         # Meters
-        self.distance_lookup = [1.597, 2.597, 3.597, 4.597]  # TODO Tune these values
+        self.distance_lookup = [1.597, 2.597, 3.597, 4.597]
 
         # RPS
-        self.speed_lookup = [41.95, 45.8, 48.9, 53.0]  # TODO Tune these values
-
-        # Seconds — measured flight times at each distance
-        self.time_lookup = [0.97, 1.21, 1.2, 1.2]  # TODO Tune these values
+        self.speed_lookup = [41.95, 45.8, 48.9, 53.0]
 
         self.distance_hub = 0.0
-        self.distance_left = 0.0
-        self.distance_right = 0.0
 
     def _linear_interp(self, x: float, xp: list[float], fp: list[float]):
         """linear interpolation"""
@@ -44,30 +39,38 @@ class Ballistics:
 
     @feedback
     def get_distance_hub(self):
+        """
+        Returns distance to hub
+        """
         return self.distance_hub
-
-    def get_distance_left(self):
-        return self.distance_left
-
-    def get_distance_right(self):
-        return self.distance_right
 
     @feedback
     def get_speed(self):
+        """
+        returns shooter speed
+        """
         return self.shooter_speed
 
     @feedback
     def get_target_angle(self):
+        """
+        just read the func name bro
+        """
         return self.target_angle
 
     def execute(self):
         pose = self.drivetrain.get_pose().translation()
-        hub_pose = alliance_hub_pos(is_red())
+        hub_pose = alliance_hub_pos(
+            is_red()
+        )  # gets what the hub pose is given if we are in red alliance
 
         self.distance_hub = hub_pose.distance(pose)
 
-        self.target_angle = math.atan2((hub_pose.y - pose.y), (hub_pose.x - pose.x))
+        self.target_angle = math.atan2(
+            (hub_pose.y - pose.y), (hub_pose.x - pose.x)
+        )  # gets angle to turn to from robot to hub
 
         self.shooter_speed = self._linear_interp(
             self.distance_hub, self.distance_lookup, self.speed_lookup
-        )
+        )  # gets what speed to use to score based off distance with linear interp
+        # between known values cause more accruate and safe than equation through all points

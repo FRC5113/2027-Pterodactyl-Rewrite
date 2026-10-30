@@ -45,10 +45,12 @@ class Kicker:
     CONTROL METHODS
     """
 
-    def set_voltage(self, voltage: units.volt):
+    def set_voltage(self, voltage: units.volt) -> None:
+        """its pretty simple it sets voltage to the kicker"""
         self.kicker_control = self.volt_control.with_output(voltage)
 
-    def set_throttle(self, throttle: float):
+    def set_throttle(self, throttle: float) -> None:
+        """sets duty cycle to kicker bound to [-1.0, 1.0]"""
         self.kicker_control = self.throttle_control.with_output(throttle)
 
     """
@@ -56,10 +58,13 @@ class Kicker:
     """
 
     @feedback
-    def get_kicker_amps(self):
+    def get_kicker_amps(self) -> float:
+        """
+        the amount of amps kicker is pulling
+        """
         return self.right_motor_supply_amps.value + self.left_motor_supply_amps.value
 
-    def execute(self):
+    def execute(self) -> None:
         self.right_motor.set_control(self.kicker_control)
 
         BaseStatusSignal.refresh_all(

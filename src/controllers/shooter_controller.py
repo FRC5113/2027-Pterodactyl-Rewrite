@@ -21,12 +21,12 @@ class ShooterController(StateMachine):
     indexer_throttle = 0.8
     kicker_throttle = 0.8
 
-    def request_shot(self, velocity):
+    def request_shot(self, velocity) -> None:
         self.requested_shoot = True
         self.shooter_velocity = velocity
         self.engage()
 
-    def request_only_spin_up(self):
+    def request_only_spin_up(self) -> None:
         self.only_spin_up = True
 
     @feedback

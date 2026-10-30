@@ -31,7 +31,7 @@ class DriveControl(StateMachine):
     TRANSLATIONAL_SPEED_TOLERANCE = 0.2  # m/s
     ROTATIONAL_SPEED_TOLERANCE = 0.1  # rad/s
 
-    def setup(self):
+    def setup(self) -> None:
         self.requested_angle = Rotation2d()
 
         self.brake_control = swerve.requests.SwerveDriveBrake()
@@ -53,6 +53,9 @@ class DriveControl(StateMachine):
         self.rot_contoller = self.rotation_profile.create_pid_controller("Rotation")
 
     def _try_engage(self):
+        """
+        only engage state machine if values are not zero
+        """
         if not (self.vel_x == 0.0 and self.vel_y == 0.0 and self.omega == 0.0):
             self.engage()
 
@@ -61,7 +64,10 @@ class DriveControl(StateMachine):
         velocity_x: units.meters_per_second,
         velocity_y: units.meters_per_second,
         omega: units.radians_per_second,
-    ):
+    ) -> None:
+        """
+        Drives bot field reletive
+        """
         self.vel_x = velocity_x
         self.vel_y = velocity_y
         self.omega = omega
@@ -73,7 +79,10 @@ class DriveControl(StateMachine):
         velocity_x: units.meters_per_second,
         velocity_y: units.meters_per_second,
         omega: units.radians_per_second,
-    ):
+    ) -> None:
+        """
+        Drives bot robot reletive
+        """
         self.vel_x = velocity_x
         self.vel_y = velocity_y
         self.omega = omega
@@ -85,7 +94,10 @@ class DriveControl(StateMachine):
         velocity_x: units.meters_per_second,
         velocity_y: units.meters_per_second,
         angle: Rotation2d,
-    ):
+    ) -> None:
+        """
+        Drives bot field reletive but pointing at angle based on alliance
+        """
         self.vel_x = velocity_x
         self.vel_y = velocity_y
         self.requested_angle = angle
@@ -93,37 +105,54 @@ class DriveControl(StateMachine):
         self.point_req = True
         self._try_engage()
 
-    def request_angle_blue_perspective(self, angle: Rotation2d):
+    def request_angle_blue_perspective(self, angle: Rotation2d) -> None:
+        """
+        Drives bot field reletive but pointing at angle base on  blue alliance
+
+        (Useful for shooting and auto sometimes)
+        """
         self.requested_angle = angle
         self.point_blue_perspective = True
         self.point_req = True
         self.engage()
 
-    def request_x_brake(self):
+    def request_x_brake(self) -> None:
+        """
+        turns all wheels into a X to avoid being able to be pushed
+        """
         self.x_brake = True
         self._try_engage()
 
-    def request_follow_trajectory(self, trajectory: SwerveTrajectory, state_tm: float):
+    def request_follow_trajectory(
+        self, trajectory: SwerveTrajectory, state_tm: float
+    ) -> None:
+        """
+        follows a choreo trajectory
+        """
         current_pose = self.drivetrain.get_pose()
         final_pose = trajectory.get_final_pose(
             DriverStationBackend.get_alliance() == Alliance.RED
-        )
+        )  # gets final pose of trajectory fliping based on alliance
+
         if final_pose is None:
             final_pose = Pose2d()
 
         swerve_sample = trajectory.sample_at(
             state_tm, DriverStationBackend.get_alliance() == Alliance.RED
-        )
+        )  # Gets what we wanna do at a certian time stamp and flips based on alliance
 
         distance = current_pose.translation().distance(
             final_pose.translation()
         )  # Calculate distance to final pose
+
         angle_error = (
             final_pose.rotation() - current_pose.rotation()
         ).radians()  # Calculate angle error
+
         velocity = self.drivetrain.get_chassis()
         speed = math.hypot(velocity.vx, velocity.vy)  # Calculate speed
 
+        # Just a bunch of stuff to make sure its in a good enough state
         in_distance_tolerance = distance < self.DISTANCE_TOLERANCE
         in_angle_tolerance = abs(angle_error) < self.ANGLE_TOLERANCE
         in_translational_speed_tolerance = speed < self.TRANSLATIONAL_SPEED_TOLERANCE
@@ -140,11 +169,14 @@ class DriveControl(StateMachine):
             and is_in_second_half_of_trajectory
         ):
             self.current_sample = (swerve_sample, current_pose)
-            self.following_traj = True
+            self.following_traj = True  # just to know if we are running a trajectory to figure out when we done
             self.engage()
             self.next_state_now("tracking_trajectory")
 
     def get_following_trajectory(self) -> bool:
+        """
+        returns if we are activly tracking a trajectory
+        """
         return self.following_traj
 
     @state(first=True)

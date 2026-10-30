@@ -29,13 +29,19 @@ class ScoreController(StateMachine):
     def request_score(self):
         self.engage()
 
-    def _is_aimed(self):
+    def _is_aimed(self) -> bool:
+        """
+        Returns if the bot is aimed at hub
+        """
         heading = self.drivetrain.get_pose().rotation().radians()
         diff = self.target_angle - heading
         error = math.atan2(math.sin(diff), math.cos(diff))
         return abs(error) <= self.angle_tol
 
-    def _update_values(self):
+    def _update_values(self) -> None:
+        """
+        calculates values for angle and rps to be used to auto aim and shoot
+        """
         self.target_angle = self.ballistics.get_target_angle()
         self.target_rps = self.ballistics.get_speed()
 
@@ -62,6 +68,7 @@ class ScoreController(StateMachine):
         self.drive_control.request_angle_blue_perspective(Rotation2d(self.target_angle))
         self.shooter_controller.request_shot(self.target_rps)
 
+        # after set point raise intake to push balls
         # if (
         #     state_tm >= self.push_wait_time
         # ):  # After set time use the intake to push balls in
